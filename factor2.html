@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Factor 2 – Vulnerabilities</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+    }
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    select.missing {
+      border: 2px solid red;
+    }
+    button {
+      margin-top: 30px;
+      width: 100%;
+      padding: 12px;
+      background-color: #007BFF;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>🟢 Vulnerabilities (Factor 2)</h2>
+<form id="factor2-form"></form>
+<button onclick="goToResults()">Submit & View Results</button>
+
+<script>
+  const questions = [
+    { id: "yst1f_fnncll__", text: "Youth is financially stable.", reverse: true },
+    { id: "yst3a_sexul_bs", text: "Youth has experienced sexual abuse." },
+    { id: "yst4_crgrvr_spr", text: "Parent/caregiver is able to provide adequate supervision.", reverse: true },
+    { id: "yst4_pr_rltnsh", text: "Youth has peer relationships that appear safe.", reverse: true },
+    { id: "yst6c_fearful", text: "Youth appears on edge or hypervigilant." },
+    { id: "yst6d_self_hrm", text: "Youth presents with self-harming behaviour or suicidal ideation." },
+    { id: "yst7f_neds_nmt", text: "Youth describes their basic needs as being unmet." },
+    { id: "yst8c_schl_ttn", text: "Youth has sporadic school attendance." },
+    { id: "yst7c_xpsd_dr_", text: "Youth is exposed to drugs/alcohol or the drug trade." },
+    { id: "yst8a_sbstnc_s", text: "Youth presents with substance use difficulties." },
+    { id: "yst1h_jstc_sys", text: "Youth does not have involvement with the justice system.", reverse: true },
+    { id: "yst6g_physcl_t", text: "Youth shows signs of physical trauma." },
+    { id: "yst8g_housing", text: "Youth lives outside of the family/caregiver home." },
+    { id: "yst6f_chngd_pp", text: "Youth presents a significant and sudden change in appearance." }
+  ];
+
+  const form = document.getElementById('factor2-form');
+
+  questions.forEach(q => {
+    const div = document.createElement('div');
+    div.className = 'question';
+    div.innerHTML = `
+      <label for="${q.id}">${q.text}</label>
+      <select id="${q.id}" required>
+        <option value="">Select</option>
+        <option value="0">No</option>
+        <option value="1">No info</option>
+        <option value="2">Maybe</option>
+        <option value="3">Yes</option>
+      </select>
+    `;
+    form.appendChild(div);
+  });
+
+  function goToResults() {
+    let score = 0;
+    let allFilled = true;
+
+    questions.forEach(q => {
+      const select = document.getElementById(q.id);
+      if (select.value === "") {
+        select.classList.add("missing");
+        allFilled = false;
+      } else {
+        select.classList.remove("missing");
+      }
+    });
+
+    if (!allFilled) {
+      alert("Please answer all questions before continuing.");
+      return;
+    }
+
+    questions.forEach(q => {
+      const raw = parseInt(document.getElementById(q.id).value);
+      const val = q.reverse ? 3 - raw : raw;
+      localStorage.setItem(q.id, val);
+      score += val;
+    });
+
+    localStorage.setItem('factor2_score', score);
+    window.location.href = 'results.html';
+  }
+</script>
+
+</body>
+</html>
