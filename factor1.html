@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Factor 1 – Warning Signs</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+    }
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    select.missing {
+      border: 2px solid red;
+    }
+    button {
+      margin-top: 30px;
+      width: 100%;
+      padding: 12px;
+      background-color: #007BFF;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>🔵 Warning Signs</h2>
+<form id="factor1-form"></form>
+<button onclick="goToFactor2()">Next: Vulnerabilities</button>
+
+<script>
+  const questions = [
+    { id: "yst5b_sxl_prtn", text: "Youth has had multiple sexual partners in the last year (4 or more)." },
+    { id: "yst5c_nn_dscls", text: "Youth is non-disclosing when it comes to sharing about their romantic partner." },
+    { id: "yst5d_stis", text: "Youth has been treated or tested for having multiple STIs/UTIs." },
+    { id: "yst5_ldr_prtnr", text: "Youth has romantic partners who are significantly older." },
+    { id: "yst5f_bsv_prtn", text: "Youth has been exposed to an abusive or controlling intimate partner." },
+    { id: "yst7_cnnctns_x", text: "Youth is connected to people who are exploited or known traffickers." },
+    { id: "yst7b_gang", text: "Youth has gang affiliation or contact." },
+    { id: "yst7d_trffckn_", text: "Youth spends time in locations known for sex trafficking." },
+    { id: "yst7e_hides_nf", text: "Youth’s answers are vague or misleading." },
+    { id: "yst8b_trnsprtt", text: "Youth hitch-hikes or travels with unknown individuals." },
+    { id: "yst8d_ntrnt_bh", text: "Youth engages in concerning internet behaviour." },
+    { id: "yst8_trffckng", text: "Youth uses language related to sex trafficking." },
+    { id: "yst8f_awol", text: "Youth runs away or is frequently missing." },
+    { id: "yst8h_id", text: "Someone else controls youth’s ID or contact with family." },
+    { id: "yst8_rprts_sx", text: "Youth reports exchanging sex for money or goods." },
+    { id: "yst9_csh_nd_gd", text: "Youth has large amounts of unexplained cash or expensive items." },
+    { id: "yst9b_hotels", text: "Youth frequents hotels or has hotel key cards." },
+    { id: "yst9c_cll_phns", text: "Youth has several cell phones." }
+  ];
+
+  const form = document.getElementById('factor1-form');
+
+  questions.forEach(q => {
+    const div = document.createElement('div');
+    div.className = 'question';
+    div.innerHTML = `
+      <label for="${q.id}">${q.text}</label>
+      <select id="${q.id}" required>
+        <option value="">Select</option>
+        <option value="0">No</option>
+        <option value="1">No info</option>
+        <option value="2">Maybe</option>
+        <option value="3">Yes</option>
+      </select>
+    `;
+    form.appendChild(div);
+  });
+
+  function goToFactor2() {
+    let score = 0;
+    let allFilled = true;
+
+    questions.forEach(q => {
+      const select = document.getElementById(q.id);
+      if (select.value === "") {
+        select.classList.add("missing");
+        allFilled = false;
+      } else {
+        select.classList.remove("missing");
+      }
+    });
+
+    if (!allFilled) {
+      alert("Please answer all questions before continuing.");
+      return;
+    }
+
+    questions.forEach(q => {
+      const val = parseInt(document.getElementById(q.id).value);
+      localStorage.setItem(q.id, val);
+      score += val;
+    });
+
+    localStorage.setItem('factor1_score', score);
+    window.location.href = 'factor2.html';
+  }
+</script>
+
+</body>
+</html>
