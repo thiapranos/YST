@@ -25,7 +25,273 @@
       font-weight: bold;
     }
     .low { color: green; }
-    .moderate { color: orange; }
+    .moderate { color: orange; }<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Assessment Results</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --york-red: #E31837;
+      --york-red-dark: #AF0D1A;
+      --ink: #111111;
+      --muted: #555555;
+      --bg: #FAFAFA;
+      --card: #FFFFFF;
+      --border: #E8E6E4;
+      --focus: #3AC2EF;
+      --neutral: #6b7280;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font-family:"IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding:40px 16px; display:grid; place-items:start center;
+    }
+    .wrap{ width:100%; max-width:860px; }
+    .hero{
+      background:var(--card); border:1px solid var(--border); border-radius:16px;
+      padding:24px; box-shadow:0 10px 24px rgba(17,17,17,0.06);
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      background:#fff5f6; color:var(--york-red); border:1px solid #ffd9de;
+      border-radius:999px; padding:6px 12px; font-weight:700; font-size:12px; letter-spacing:.02em;
+      margin-bottom:10px;
+    }
+    h1{ margin:0 0 4px 0; font-size:clamp(24px,3.6vw,34px); letter-spacing:-0.01em; }
+    .stack{ display:grid; gap:16px; margin-top:18px; }
+    .card{
+      border:1px solid var(--border); border-radius:12px; padding:16px 16px 18px; background:#fff;
+    }
+    .head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+    .title{ font-size:18px; font-weight:700; margin:0; }
+    .score{ font-weight:800; color:var(--york-red); }
+    .max{ color:var(--muted); }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px;
+      border:1px solid transparent;
+    }
+    .pill.high{ color:#fff; background:var(--york-red); }
+    .pill.ok{ color:var(--neutral); background:#f3f4f6; border-color:#e5e7eb; }
+    .riskline{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+    .hazard, .okicon{ width:18px; height:18px; display:inline-block; }
+    .hazard svg{ display:block; width:100%; height:100%; color:var(--york-red); }
+    .okicon svg{ display:block; width:100%; height:100%; color:var(--neutral); }
+    details{ margin-top:10px; }
+    summary{ cursor:pointer; font-weight:600; }
+    .list{ margin:10px 0 0; padding-left:18px; }
+    .btns{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+    .btn{
+      appearance:none; border:1px solid var(--border); background:#fff; border-radius:10px;
+      padding:10px 14px; font-weight:700; cursor:pointer;
+    }
+    .btn.primary{ background:var(--york-red); color:#fff; border-color:transparent; }
+    .btn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+    footer{ margin-top:14px; text-align:center; font-size:13px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="wrap" role="main">
+    <section class="hero">
+      <div class="badge" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" stroke="currentColor" stroke-width="1.5" fill="none"></path><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        Youth Risk Assessment Tool (YST)
+      </div>
+      <h1>Assessment Results</h1>
+
+      <div class="stack">
+        <div class="card">
+          <div class="head">
+            <h2 class="title">Warning Signs</h2>
+            <div><span class="score" id="f1Score">0</span> <span class="max">/ <span id="f1Max">0</span></span></div>
+          </div>
+          <div class="riskline" id="f1RiskLine">
+            <span class="pill" id="f1Pill">Loading…</span>
+            <span class="max">Cutoff: 9</span>
+          </div>
+          <details open>
+            <summary>Show risk items</summary>
+            <ul class="list" id="f1List"></ul>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="head">
+            <h2 class="title">Vulnerabilities</h2>
+            <div><span class="score" id="f2Score">0</span> <span class="max">/ <span id="f2Max">0</span></span></div>
+          </div>
+          <div class="riskline" id="f2RiskLine">
+            <span class="pill" id="f2Pill">Loading…</span>
+            <span class="max">Cutoff: 10</span>
+          </div>
+          <details open>
+            <summary>Show risk items</summary>
+            <ul class="list" id="f2List"></ul>
+          </details>
+        </div>
+
+        <div class="btns">
+          <button class="btn primary" id="printBtn">Print / Save PDF</button>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <small>Developed by the Teen Relationships Lab at York University in collaboration with child welfare partners.</small>
+    </footer>
+  </main>
+
+  <script>
+    // Factor membership (kept items only)
+    const F1_IDS = [
+      'yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn',
+      'yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf',
+      'yst8b_trnsprtt','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8h_id',
+      'yst8_rprts_sx','yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'
+    ];
+    const F2_IDS = [
+      'yst1f_fnncll__','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh','yst6c_fearful','yst6d_self_hrm',
+      'yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t',
+      'yst8g_housing','yst6f_chngd_pp'
+    ];
+    const REVERSED = new Set(['yst1f_fnncll__','yst4_crgrvr_spr','yst4_pr_rltnsh','yst1h_jstc_sys']);
+
+    const LABELS = {
+      yst5b_sxl_prtn: "Multiple sexual partners in the last year (4+).",
+      yst5c_nn_dscls: "Non-disclosing about romantic partner.",
+      yst5d_stis: "Treated/tested for multiple STIs/UTIs.",
+      yst5_ldr_prtnr: "Romantic partners who are significantly older.",
+      yst5f_bsv_prtn: "Exposed to abusive/controlling partner.",
+      yst7_cnnctns_x: "Connected to exploited people/known traffickers.",
+      yst7b_gang: "Gang affiliation/contact.",
+      yst7d_trffckn_: "Spends time in locations known for sex trafficking.",
+      yst7e_hides_nf: "Answers are vague or misleading.",
+      yst8b_trnsprtt: "Hitch-hikes/travels with unknown individuals.",
+      yst8d_ntrnt_bh: "Concerning internet behaviour.",
+      yst8_trffckng: "Uses language related to sex trafficking.",
+      yst8f_awol: "Runs away/frequently missing.",
+      yst8h_id: "Someone else controls ID or family contact.",
+      yst8_rprts_sx: "Reports exchanging sex for money or goods.",
+      yst9_csh_nd_gd: "Large amounts of unexplained cash/expensive items.",
+      yst9b_hotels: "Frequents hotels/has hotel key cards.",
+      yst9c_cll_phns: "Several cell phones.",
+      yst1f_fnncll__: "Financially stable.",
+      yst3a_sexul_bs: "Experienced sexual abuse.",
+      yst4_crgrvr_spr: "Caregiver provides adequate supervision.",
+      yst4_pr_rltnsh: "Peer relationships appear safe.",
+      yst6c_fearful: "Appears on edge/hypervigilant.",
+      yst6d_self_hrm: "Self-harm behaviour or suicidal ideation.",
+      yst7f_neds_nmt: "Basic needs unmet.",
+      yst8c_schl_ttn: "Sporadic school attendance.",
+      yst7c_xpsd_dr_: "Exposed to drugs/alcohol/drug trade.",
+      yst8a_sbstnc_s: "Substance use difficulties.",
+      yst1h_jstc_sys: "No justice system involvement.",
+      yst6g_physcl_t: "Signs of physical trauma.",
+      yst8g_housing: "Lives outside caregiver home.",
+      yst6f_chngd_pp: "Significant/sudden change in appearance."
+    };
+
+    function sum(ids){
+      return ids.reduce((acc,id)=>{
+        const v = parseInt(localStorage.getItem(id) || '0', 10);
+        return acc + (isNaN(v) ? 0 : v);
+      },0);
+    }
+
+    function buildDisplayList(ids){
+      const out = [];
+      ids.forEach(id => {
+        const stored = parseInt(localStorage.getItem(id) || '0', 10);
+        if (isNaN(stored)) return;
+        const isReversed = REVERSED.has(id);
+        const raw = isReversed ? (3 - stored) : stored;
+        // Non-reversed -> show Maybe/Yes; Reversed -> show only No
+        if ((!isReversed && raw >= 2) || (isReversed && raw === 0)){
+          out.push({ id, raw });
+        }
+      });
+      return out;
+    }
+
+    function tag(raw){ return raw === 3 ? "Yes" : raw === 2 ? "Maybe" : "No"; }
+
+    function setRiskLine(containerId, pillId, isHigh){
+      const line = document.getElementById(containerId);
+      const pill = document.getElementById(pillId);
+      pill.className = 'pill ' + (isHigh ? 'high' : 'ok');
+      pill.textContent = isHigh ? 'High risk' : 'Not high risk';
+
+      // Add/replace icon + text message
+      // Clear previous icon/message nodes if rerendered
+      const oldMsg = line.querySelector('.risk-msg');
+      if (oldMsg) oldMsg.remove();
+      const iconWrap = document.createElement('span');
+      iconWrap.className = isHigh ? 'hazard' : 'okicon';
+      iconWrap.innerHTML = isHigh
+        ? '<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z\"></path><line x1=\"12\" y1=\"9\" x2=\"12\" y2=\"13\"></line><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"></line></svg>'
+        : '<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"20 6 9 17 4 12\"></polyline></svg>';
+      const msg = document.createElement('span');
+      msg.className = 'risk-msg';
+      msg.textContent = isHigh
+        ? 'Scores indicate Youth is High Risk for sex trafficking recruitment'
+        : 'scores indicate no current risk for sex trafficking recruitment';
+      // Insert after pill
+      line.insertBefore(iconWrap, line.children[1]);
+      line.appendChild(msg);
+    }
+
+    function fillList(ids, ulId){
+      const ul = document.getElementById(ulId);
+      ul.innerHTML = '';
+      const items = buildDisplayList(ids);
+      if (!items.length){
+        const li = document.createElement('li');
+        li.textContent = 'No items to display.';
+        ul.appendChild(li);
+        return;
+      }
+      items.forEach(({id, raw}) => {
+        const li = document.createElement('li');
+        li.textContent = `${LABELS[id] || id} — ${tag(raw)}`;
+        ul.appendChild(li);
+      });
+    }
+
+    function render(){
+      const f1 = sum(F1_IDS);
+      const f2 = sum(F2_IDS);
+      const f1Max = F1_IDS.length * 3;
+      const f2Max = F2_IDS.length * 3;
+
+      document.getElementById('f1Score').textContent = f1;
+      document.getElementById('f1Max').textContent = f1Max;
+      document.getElementById('f2Score').textContent = f2;
+      document.getElementById('f2Max').textContent = f2Max;
+
+      setRiskLine('f1RiskLine','f1Pill', f1 >= 9);
+      setRiskLine('f2RiskLine','f2Pill', f2 >= 10);
+
+      fillList(F1_IDS, 'f1List');
+      fillList(F2_IDS, 'f2List');
+    }
+
+    // Auto-clear answers after rendering and on exit
+    function clearKeys(){
+      [...F1_IDS, ...F2_IDS, 'factor1_score','factor2_score'].forEach(k => localStorage.removeItem(k));
+    }
+
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+    render();
+    setTimeout(clearKeys, 0);
+    window.addEventListener('pagehide', clearKeys);
+    window.addEventListener('beforeunload', clearKeys);
+  </script>
+</body>
+</html>
+
     .high { color: red; }
   </style>
 </head>
