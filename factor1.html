@@ -74,7 +74,6 @@
       background: #fff;
       padding: 12px 12px 6px;
       margin: 10px 0;
-      scroll-margin-top: 90px; /* keeps focused fields visible under sticky CTA */
     }
 
     .field legend{
@@ -85,4 +84,259 @@
 
     .choices {
       display: grid;
-      grid-templa
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+    @media (min-width: 640px){
+      .choices { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    .choice {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .choice input[type="radio"]{
+      width: 18px;
+      height: 18px;
+      accent-color: var(--york-red);
+    }
+
+    .choice:has(input[type="radio"]:focus-visible){
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .missing{
+      border-color: var(--warn) !important;
+      box-shadow: 0 0 0 3px rgba(217,48,37,0.15);
+    }
+
+    .cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+      gap: 8px;
+    }
+
+    .btn-primary{
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      background: var(--york-red);
+      color: #fff;
+      padding: 14px 22px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(227,24,55,0.22);
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      width: 100%;
+    }
+    .btn-primary:hover { background: var(--york-red-dark); box-shadow: 0 10px 20px rgba(227,24,55,0.28); }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-primary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    footer{ margin-top: 14px; text-align: center; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="wrap" role="main">
+    <section class="hero" aria-labelledby="title">
+      <div class="badge" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" stroke="currentColor" stroke-width="1.5" fill="none"></path><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        Youth Risk Assessment Tool (YST)
+      </div>
+
+      <h1 id="title">Assessment</h1>
+      <div class="time-note">Takes approximately 5–10 minutes to complete.</div>
+      <div class="step-note" aria-live="polite">Step 2 of 3</div>
+
+      <form id="combined-form" novalidate>
+        <div id="question-list"></div>
+
+        <div class="cta">
+          <button type="button" class="btn-primary" id="submitBtn">Submit & View Results</button>
+        </div>
+      </form>
+    </section>
+
+    <footer>
+      <small>Developed by the Teen Relationships Lab at York University in collaboration with child welfare partners. For use by social workers only.</small>
+    </footer>
+  </main>
+
+  <script>
+    // Question bank
+    const BANK = {
+      // Category 1
+      yst1f_fnncll__: { id: "yst1f_fnncll__", text: "Youth is financially stable.", reverse: true },
+      yst1h_jstc_sys: { id: "yst1h_jstc_sys", text: "Youth does not have involvement with the justice system.", reverse: true },
+      // Category 3
+      yst3a_sexul_bs: { id: "yst3a_sexul_bs", text: "Youth has experienced sexual abuse." },
+      // Category 4
+      yst4_crgrvr_spr: { id: "yst4_crgrvr_spr", text: "Parent/caregiver is able to provide adequate supervision.", reverse: true },
+      yst4_pr_rltnsh: { id: "yst4_pr_rltnsh", text: "Youth has peer relationships that appear safe.", reverse: true },
+      // Category 5
+      yst5b_sxl_prtn: { id: "yst5b_sxl_prtn", text: "Youth has had multiple sexual partners in the last year (4 or more)." },
+      yst5c_nn_dscls: { id: "yst5c_nn_dscls", text: "Youth is non-disclosing when it comes to sharing about their romantic partner." },
+      yst5d_stis: { id: "yst5d_stis", text: "Youth has been treated or tested for having multiple STIs/UTIs." },
+      yst5_ldr_prtnr: { id: "yst5_ldr_prtnr", text: "Youth has romantic partners who are significantly older." },
+      yst5f_bsv_prtn: { id: "yst5f_bsv_prtn", text: "Youth has been exposed to an abusive or controlling intimate partner." },
+      // Category 6
+      yst6c_fearful: { id: "yst6c_fearful", text: "Youth appears on edge or hypervigilant." },
+      yst6d_self_hrm: { id: "yst6d_self_hrm", text: "Youth presents with self-harming behaviour or suicidal ideation." },
+      yst6f_chngd_pp: { id: "yst6f_chngd_pp", text: "Youth presents a significant and sudden change in appearance." },
+      yst6g_physcl_t: { id: "yst6g_physcl_t", text: "Youth shows signs of physical trauma." },
+      // Category 7
+      yst7_cnnctns_x: { id: "yst7_cnnctns_x", text: "Youth is connected to people who are exploited or known traffickers." },
+      yst7b_gang: { id: "yst7b_gang", text: "Youth has gang affiliation or contact." },
+      yst7c_xpsd_dr_: { id: "yst7c_xpsd_dr_", text: "Youth is exposed to drugs/alcohol or the drug trade." },
+      yst7d_trffckn_: { id: "yst7d_trffckn_", text: "Youth spends time in locations known for sex trafficking." },
+      yst7e_hides_nf: { id: "yst7e_hides_nf", text: "Youth’s answers are vague or misleading." },
+      yst7f_neds_nmt: { id: "yst7f_neds_nmt", text: "Youth describes their basic needs as being unmet." },
+      // Category 8
+      yst8a_sbstnc_s: { id: "yst8a_sbstnc_s", text: "Youth presents with substance use difficulties." },
+      yst8b_trnsprtt: { id: "yst8b_trnsprtt", text: "Youth hitch-hikes or travels with unknown individuals." },
+      yst8c_schl_ttn: { id: "yst8c_schl_ttn", text: "Youth has sporadic school attendance." },
+      yst8d_ntrnt_bh: { id: "yst8d_ntrnt_bh", text: "Youth engages in concerning internet behaviour." },
+      yst8_trffckng: { id: "yst8_trffckng", text: "Youth uses language related to sex trafficking." },
+      yst8f_awol: { id: "yst8f_awol", text: "Youth runs away or is frequently missing." },
+      yst8g_housing: { id: "yst8g_housing", text: "Youth lives outside of the family/caregiver home." },
+      yst8h_id: { id: "yst8h_id", text: "Someone else controls youth’s ID or contact with family." },
+      yst8_rprts_sx: { id: "yst8_rprts_sx", text: "Youth reports exchanging sex for money or goods." },
+      // Category 9
+      yst9_csh_nd_gd: { id: "yst9_csh_nd_gd", text: "Youth has large amounts of unexplained cash or expensive items." },
+      yst9b_hotels: { id: "yst9b_hotels", text: "Youth frequents hotels or has hotel key cards." },
+      yst9c_cll_phns: { id: "yst9c_cll_phns", text: "Youth has several cell phones." },
+    };
+
+    // Ordered as per the original YST PDF (only the items you kept)
+    const orderedIds = [
+      'yst1f_fnncll__','yst1h_jstc_sys','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh',
+      'yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn',
+      'yst6c_fearful','yst6d_self_hrm','yst6f_chngd_pp','yst6g_physcl_t',
+      'yst7_cnnctns_x','yst7b_gang','yst7c_xpsd_dr_','yst7d_trffckn_','yst7e_hides_nf','yst7f_neds_nmt',
+      'yst8a_sbstnc_s','yst8b_trnsprtt','yst8c_schl_ttn','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8g_housing','yst8h_id','yst8_rprts_sx',
+      'yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'
+    ];
+
+    const orderedQuestions = orderedIds.map(id => BANK[id]).filter(Boolean);
+
+    // Factor sets for scoring (not shown in UI)
+    const factor1Set = new Set([
+      'yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn',
+      'yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf',
+      'yst8b_trnsprtt','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8h_id',
+      'yst8_rprts_sx','yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'
+    ]);
+
+    const factor2Set = new Set([
+      'yst1f_fnncll__','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh','yst6c_fearful','yst6d_self_hrm',
+      'yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t',
+      'yst8g_housing','yst6f_chngd_pp'
+    ]);
+
+    const options = [
+      { label: "No", value: 0 },
+      { label: "No info", value: 1 },
+      { label: "Maybe", value: 2 },
+      { label: "Yes", value: 3 },
+    ];
+
+    function renderRadioGroup(container, q){
+      const field = document.createElement('fieldset');
+      field.className = 'field';
+      field.id = `field_${q.id}`;
+      field.innerHTML = `<legend id="label_${q.id}">${q.text}</legend>`; // no numbering
+
+      const group = document.createElement('div');
+      group.className = 'choices';
+
+      options.forEach((opt, i) => {
+        const choiceId = `${q.id}_${opt.value}`;
+        const label = document.createElement('label');
+        label.className = 'choice';
+        label.setAttribute('for', choiceId);
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = q.id;
+        input.id = choiceId;
+        input.value = String(opt.value);
+        if (i === 0) input.required = true;
+
+        const txt = document.createElement('span');
+        txt.textContent = opt.label;
+
+        label.appendChild(input);
+        label.appendChild(txt);
+        group.appendChild(label);
+      });
+
+      field.appendChild(group);
+      container.appendChild(field);
+    }
+
+    (function renderAll(){
+      const container = document.getElementById('question-list');
+      orderedQuestions.forEach(q => renderRadioGroup(container, q));
+    })();
+
+    function validateAndScore(){
+      const allFields = Array.from(document.querySelectorAll('.field'));
+      let firstMissing = null;
+      let allFilled = true;
+
+      allFields.forEach(field => {
+        const name = field.querySelector('input[type="radio"]').name;
+        const checked = document.querySelector(`input[name="${name}"]:checked`);
+        if(!checked){
+          field.classList.add('missing');
+          if(!firstMissing) firstMissing = field;
+          allFilled = false;
+        } else {
+          field.classList.remove('missing');
+        }
+      });
+
+      if(!allFilled){
+        alert('Please answer all questions before continuing.');
+        firstMissing.scrollIntoView({behavior:'smooth', block:'center'});
+        firstMissing.querySelector('input')?.focus({preventScroll:true});
+        return false;
+      }
+
+      let f1Score = 0, f2Score = 0;
+
+      orderedQuestions.forEach(q => {
+        const sel = document.querySelector(`input[name="${q.id}"]:checked`);
+        const raw = parseInt(sel.value, 10);
+        const val = q.reverse ? 3 - raw : raw;
+        localStorage.setItem(q.id, val);
+        if (factor1Set.has(q.id)) f1Score += val;
+        if (factor2Set.has(q.id)) f2Score += val;
+      });
+
+      localStorage.setItem('factor1_score', f1Score);
+      localStorage.setItem('factor2_score', f2Score);
+      return true;
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      if(validateAndScore()){
+        window.location.href = 'results.html';
+      }
+    });
+  </script>
+</body>
+</html>
+
