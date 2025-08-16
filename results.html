@@ -1,3 +1,6 @@
+Here you go — the straight HTML (vertical layout, York colours, “Show risk items,” hazard/neutral messages, and auto-clears answers after render and on exit):
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,6 +133,7 @@
       'yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t',
       'yst8g_housing','yst6f_chngd_pp'
     ];
+    // Items reverse-scored during entry
     const REVERSED = new Set(['yst1f_fnncll__','yst4_crgrvr_spr','yst4_pr_rltnsh','yst1h_jstc_sys']);
 
     const LABELS = {
@@ -174,6 +178,9 @@
       },0);
     }
 
+    // Build list with rule:
+    // - Non-reversed items show if raw >= 2 (Maybe/Yes)
+    // - Reversed items show only if raw === 0 (No)
     function buildDisplayList(ids){
       const out = [];
       ids.forEach(id => {
@@ -181,7 +188,6 @@
         if (isNaN(stored)) return;
         const isReversed = REVERSED.has(id);
         const raw = isReversed ? (3 - stored) : stored;
-        // Non-reversed -> show Maybe/Yes; Reversed -> show only No
         if ((!isReversed && raw >= 2) || (isReversed && raw === 0)){
           out.push({ id, raw });
         }
@@ -197,21 +203,23 @@
       pill.className = 'pill ' + (isHigh ? 'high' : 'ok');
       pill.textContent = isHigh ? 'High risk' : 'Not high risk';
 
-      // Add/replace icon + text message
-      // Clear previous icon/message nodes if rerendered
-      const oldMsg = line.querySelector('.risk-msg');
-      if (oldMsg) oldMsg.remove();
+      // Remove old message/icon if rerendered
+      const oldMsg = line.querySelector('.risk-msg'); if (oldMsg) oldMsg.remove();
+      const oldIcon = line.querySelector('.hazard, .okicon'); if (oldIcon) oldIcon.remove();
+
       const iconWrap = document.createElement('span');
       iconWrap.className = isHigh ? 'hazard' : 'okicon';
       iconWrap.innerHTML = isHigh
-        ? '<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z\"></path><line x1=\"12\" y1=\"9\" x2=\"12\" y2=\"13\"></line><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"></line></svg>'
-        : '<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"20 6 9 17 4 12\"></polyline></svg>';
+        ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
+        : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
       const msg = document.createElement('span');
       msg.className = 'risk-msg';
       msg.textContent = isHigh
         ? 'Scores indicate Youth is High Risk for sex trafficking recruitment'
         : 'scores indicate no current risk for sex trafficking recruitment';
-      // Insert after pill
+
+      // Insert icon and message
       line.insertBefore(iconWrap, line.children[1]);
       line.appendChild(msg);
     }
@@ -264,4 +272,4 @@
   </script>
 </body>
 </html>
-
+```
