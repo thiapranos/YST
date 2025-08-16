@@ -1,31 +1,4 @@
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Assessment Results</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      text-align: center;
-    }
-    h2 {
-      color: #007BFF;
-    }
-    .result-box {
-      margin-top: 30px;
-      padding: 20px;
-      border-radius: 10px;
-      background-color: #f2f2f2;
-      font-size: 1.2em;
-      font-weight: bold;
-    }
-    .low { color: green; }
-    .moderate { color: orange; }<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -292,31 +265,3 @@
 </body>
 </html>
 
-    .high { color: red; }
-  </style>
-</head>
-<body>
-
-<h2>Assessment Results</h2>
-<div class="result-box" id="factor1Result"></div>
-<div class="result-box" id="factor2Result"></div>
-
-<script>
-  function getRiskLevel(score, cutoff) {
-    if (score >= cutoff) return '<span class="high">FLAGGED RISK</span>';
-    if (score >= Math.floor(cutoff * 0.75)) return '<span class="moderate">Potential Risk</span>';
-    return '<span class="low">No Flagged Risk</span>';
-  }
-
-  const factor1 = parseInt(localStorage.getItem('factor1_score') || '0');
-  const factor2 = parseInt(localStorage.getItem('factor2_score') || '0');
-
-  document.getElementById('factor1Result').innerHTML =
-    `🔵 <strong>Warning Signs</strong><br>Total Score: ${factor1}<br>Risk Level: ${getRiskLevel(factor1, 9)}`;
-
-  document.getElementById('factor2Result').innerHTML =
-    `🟢 <strong>Vulnerabilities</strong><br>Total Score: ${factor2}<br>Risk Level: ${getRiskLevel(factor2, 10)}`;
-</script>
-
-</body>
-</html>
