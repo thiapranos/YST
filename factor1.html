@@ -38,7 +38,6 @@
 
     .wrap { width: 100%; max-width: 1000px; }
 
-    /* Layout: content + side rail */
     .layout{ display:grid; grid-template-columns: 1fr; gap:16px; }
     @media (min-width: 980px){ .layout{ grid-template-columns: minmax(0, 680px) 260px; align-items:start; } }
 
@@ -51,7 +50,6 @@
     h1{ margin:0 0 6px 0; font-size: clamp(24px, 3.6vw, 34px); line-height:1.2; letter-spacing:-.01em; }
     .time-note{ font-size:14px; color:var(--muted); }
 
-    /* Answer Key */
     .answer-key{ margin-top:12px; padding:12px; border:1px dashed var(--border); border-radius:12px; background:#fff; }
     .answer-key h2{ margin:0 0 8px 0; font-size:14px; letter-spacing:.2px; }
     .key-grid{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -59,10 +57,10 @@
     .key-item{ display:flex; align-items:flex-start; gap:10px; border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:#fff; }
     .key-item .hint{ font-size:12px; color:var(--muted); margin-top:2px; }
 
-    /* Form */
     form{ margin-top: 12px; }
     .field{ border:1px solid var(--border); border-radius:12px; background:#fff; padding:12px 12px 8px; margin:12px 0; }
     .field legend{ font-weight:700; margin-bottom:8px; padding:0; font-size:15px; }
+    .field em{ font-style:italic; font-weight:400; }
 
     .choices{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; }
     @media(min-width:640px){ .choices{ grid-template-columns: repeat(4, minmax(0,1fr)); } }
@@ -80,7 +78,6 @@
 
     footer{ margin-top: 14px; text-align:center; font-size:13px; color:var(--muted); }
 
-    /* Side progress */
     .rail{ position: sticky; top: 16px; padding: 14px; }
     .progress-box{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; }
     .progress-title{ font-weight:700; font-size:14px; margin:0 0 8px 0; }
@@ -88,7 +85,6 @@
     .bar > .fill{ height:100%; width:0%; background: var(--york-red); transition: width .2s ease; }
     .progress-meta{ margin-top:8px; font-size:12px; color:var(--muted); display:flex; justify-content:space-between; }
 
-    /* Mobile bottom progress */
     .mobile-progress{ position: fixed; left:0; right:0; bottom:0; background: rgba(255,255,255,0.98); border-top:1px solid var(--border); padding: 8px 12px; display:flex; justify-content:center; z-index: 50; }
     .mobile-progress-inner{ width: min(1000px, 100%); display:flex; align-items:center; gap:10px; font-size:12px; color:var(--muted); }
     .mobile-bar{ flex:1; height:8px; background:#f2f2f2; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
@@ -107,34 +103,13 @@
         <h1 id="title">Screening items</h1>
         <div class="time-note">Takes approximately 10–15 minutes to complete.</div>
 
-        <!-- Answer Key (2x2 cards) -->
         <div class="answer-key" role="note" aria-labelledby="key-title">
           <h2 id="key-title">For each item listed below, using your clinical judgement, please check one of the following options:</h2>
           <ul class="key-grid" aria-label="Answer options">
-            <li class="key-item">
-              <div>
-                <strong>No Info</strong>
-                <div class="hint">Information not available to make a judgment.</div>
-              </div>
-            </li>
-            <li class="key-item">
-              <div>
-                <strong>No</strong>
-                <div class="hint">Information available and definitively not present.</div>
-              </div>
-            </li>
-            <li class="key-item">
-              <div>
-                <strong>Maybe</strong>
-                <div class="hint">Information available and might be present.</div>
-              </div>
-            </li>
-            <li class="key-item">
-              <div>
-                <strong>Yes</strong>
-                <div class="hint">Information available and definitively present.</div>
-              </div>
-            </li>
+            <li class="key-item"><div><strong>No Info</strong><div class="hint">Information not available to make a judgment.</div></div></li>
+            <li class="key-item"><div><strong>No</strong><div class="hint">Information available and definitively not present.</div></div></li>
+            <li class="key-item"><div><strong>Maybe</strong><div class="hint">Information available and might be present.</div></div></li>
+            <li class="key-item"><div><strong>Yes</strong><div class="hint">Information available and definitively present.</div></div></li>
           </ul>
         </div>
 
@@ -145,9 +120,7 @@
           </div>
         </form>
 
-        <footer>
-          <small>Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions. No distribution of this tool outside your agency.</small>
-        </footer>
+        <footer><small>Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions. No distribution of this tool outside your agency.</small></footer>
       </section>
 
       <aside class="rail">
@@ -160,7 +133,6 @@
     </div>
   </div>
 
-  <!-- Mobile progress (fixed) -->
   <div class="mobile-progress" role="status" aria-live="polite">
     <div class="mobile-progress-inner">
       <span id="progressCountMobile">0/0 answered</span>
@@ -170,51 +142,43 @@
   </div>
 
   <script>
-    // ===== Question bank =====
+    function italicizeParentheticals(s){ return s.replace(/\(([^)]+)\)/g, '<em>($1)</em>'); }
+
     const BANK = {
-      // Category 1
-      yst1f_fnncll__: { id: "yst1f_fnncll__", text: "Youth is financially stable.", reverse: true },
-      yst1h_jstc_sys: { id: "yst1h_jstc_sys", text: "Youth does not have involvement with the justice system.", reverse: true },
-      // Category 3
-      yst3a_sexul_bs: { id: "yst3a_sexul_bs", text: "Youth has experienced sexual abuse." },
-      // Category 4
-      yst4_crgrvr_spr: { id: "yst4_crgrvr_spr", text: "Parent/caregiver is able to provide adequate supervision.", reverse: true },
-      yst4_pr_rltnsh: { id: "yst4_pr_rltnsh", text: "Youth has peer relationships that appear safe.", reverse: true },
-      // Category 5
-      yst5b_sxl_prtn: { id: "yst5b_sxl_prtn", text: "Youth has had multiple sexual partners in the last year (4 or more)." },
-      yst5c_nn_dscls: { id: "yst5c_nn_dscls", text: "Youth is non-disclosing when it comes to sharing about their romantic partner." },
-      yst5d_stis: { id: "yst5d_stis", text: "Youth has been treated or tested for having multiple STIs/UTIs." },
-      yst5_ldr_prtnr: { id: "yst5_ldr_prtnr", text: "Youth has romantic partners who are significantly older." },
-      yst5f_bsv_prtn: { id: "yst5f_bsv_prtn", text: "Youth has been exposed to an abusive or controlling intimate partner." },
-      // Category 6
-      yst6c_fearful: { id: "yst6c_fearful", text: "Youth appears on edge or hypervigilant." },
-      yst6d_self_hrm: { id: "yst6d_self_hrm", text: "Youth presents with self-harming behaviour or suicidal ideation." },
-      yst6f_chngd_pp: { id: "yst6f_chngd_pp", text: "Youth presents a significant and sudden change in appearance." },
-      yst6g_physcl_t: { id: "yst6g_physcl_t", text: "Youth shows signs of physical trauma." },
-      // Category 7
-      yst7_cnnctns_x: { id: "yst7_cnnctns_x", text: "Youth is connected to people who are exploited or known traffickers." },
-      yst7b_gang: { id: "yst7b_gang", text: "Youth has gang affiliation or contact." },
-      yst7c_xpsd_dr_: { id: "yst7c_xpsd_dr_", text: "Youth is exposed to drugs/alcohol or the drug trade." },
-      yst7d_trffckn_: { id: "yst7d_trffckn_", text: "Youth spends time in locations known for sex trafficking." },
-      yst7e_hides_nf: { id: "yst7e_hides_nf", text: "Youth’s answers are vague or misleading." },
-      yst7f_neds_nmt: { id: "yst7f_neds_nmt", text: "Youth describes their basic needs as being unmet." },
-      // Category 8
-      yst8a_sbstnc_s: { id: "yst8a_sbstnc_s", text: "Youth presents with substance use difficulties." },
-      yst8b_trnsprtt: { id: "yst8b_trnsprtt", text: "Youth hitch-hikes or travels with unknown individuals." },
-      yst8c_schl_ttn: { id: "yst8c_schl_ttn", text: "Youth has sporadic school attendance." },
-      yst8d_ntrnt_bh: { id: "yst8d_ntrnt_bh", text: "Youth engages in concerning internet behaviour." },
-      yst8_trffckng: { id: "yst8_trffckng", text: "Youth uses language related to sex trafficking." },
-      yst8f_awol: { id: "yst8f_awol", text: "Youth runs away or is frequently missing." },
-      yst8g_housing: { id: "yst8g_housing", text: "Youth lives outside of the family/caregiver home." },
-      yst8h_id: { id: "yst8h_id", text: "Someone else controls youth’s ID or contact with family." },
-      yst8_rprts_sx: { id: "yst8_rprts_sx", text: "Youth reports exchanging sex for money or goods." },
-      // Category 9
-      yst9_csh_nd_gd: { id: "yst9_csh_nd_gd", text: "Youth has large amounts of unexplained cash or expensive items." },
-      yst9b_hotels: { id: "yst9b_hotels", text: "Youth frequents hotels or has hotel key cards." },
-      yst9c_cll_phns: { id: "yst9c_cll_phns", text: "Youth has several cell phones." },
+      yst1f_fnncll__: { id: "yst1f_fnncll__", text: "Youth is financially stable (e.g., has stable housing, caregiver is able to provide, children, pets, family obligations are met, is not being forced to give their money to someone)", reverse: true },
+      yst1h_jstc_sys: { id: "yst1h_jstc_sys", text: "Youth has past or current involvement with the justice system (e.g., contact with police, involvement with criminal activities)" },
+      yst3a_sexul_bs: { id: "yst3a_sexul_bs", text: "Youth has experienced sexual abuse" },
+      yst4_crgrvr_spr: { id: "yst4_crgrvr_spr", text: "Parent/caregiver is unable to provide adequate supervision" },
+      yst4_pr_rltnsh: { id: "yst4_pr_rltnsh", text: "Youth has peer relationships that appear unsafe and/or experiences social exclusion (e.g., peers who are not a positive influence, significant age differences, unstable peer group, antisocial peers)" },
+      yst5b_sxl_prtn: { id: "yst5b_sxl_prtn", text: "Youth has had multiple sexual partners in the last year (4 or more)" },
+      yst5c_nn_dscls: { id: "yst5c_nn_dscls", text: "Youth is non-disclosing when it comes to sharing about their romantic partner" },
+      yst5d_stis: { id: "yst5d_stis", text: "Youth has been treated or tested for having multiple STIs/UTIs (e.g., kidney infections)" },
+      yst5_ldr_prtnr: { id: "yst5_ldr_prtnr", text: "Youth has a romantic partner who is significantly older (≥4 years) (e.g., significant age gap between youth and romantic partner — 4 or more years)" },
+      yst5f_bsv_prtn: { id: "yst5f_bsv_prtn", text: "Youth has been exposed to an abusive or controlling intimate partner" },
+      yst6c_fearful: { id: "yst6c_fearful", text: "Youth appears on edge, fearful, or hypervigilant" },
+      yst6d_self_hrm: { id: "yst6d_self_hrm", text: "Youth presents with self-harming behaviour and/or expresses suicidal ideation (i.e., thoughts about dying or ending life)" },
+      yst6f_chngd_pp: { id: "yst6f_chngd_pp", text: "Youth presents a significant and sudden change in appearance (e.g., dress, hygiene, weight, tattoos)" },
+      yst6g_physcl_t: { id: "yst6g_physcl_t", text: "Youth shows signs of physical trauma (e.g., black eyes, cigarette burns, or broken bones)" },
+      yst7_cnnctns_x: { id: "yst7_cnnctns_x", text: "Youth is connected to people who are exploited, who buy/sell sex, or who are known/suspected traffickers (i.e., trafficked; buyers/sellers; known or suspected traffickers)" },
+      yst7b_gang: { id: "yst7b_gang", text: "Youth has gang affiliation or contact (e.g., tattoos suggestive of branding or gang insignia)" },
+      yst7c_xpsd_dr_: { id: "yst7c_xpsd_dr_", text: "Youth is exposed to drugs/alcohol and/or the drug trade" },
+      yst7d_trffckn_: { id: "yst7d_trffckn_", text: "Youth spends time in locations known as sex trafficking venues (including online) (e.g., physical or online spaces where youth congregate without caregiver supervision)" },
+      yst7e_hides_nf: { id: "yst7e_hides_nf", text: "Youth’s answers (age, whereabouts, relationships) are vague or misleading (e.g., answers to age, whereabouts, residence, or relationships are inconsistent)" },
+      yst7f_neds_nmt: { id: "yst7f_neds_nmt", text: "Youth describes basic needs as being unmet (e.g., financially and/or emotionally)" },
+      yst8a_sbstnc_s: { id: "yst8a_sbstnc_s", text: "Youth presents with substance use difficulties (e.g., appears to be under the influence, found with alcohol/drugs)" },
+      yst8b_trnsprtt: { id: "yst8b_trnsprtt", text: "Youth hitch-hikes or travels with unknown individuals (e.g., receives or solicits drives from strangers, has Ubers sent, has a driver)" },
+      yst8c_schl_ttn: { id: "yst8c_schl_ttn", text: "Youth has sporadic school attendance (e.g., skips multiple days, not attending, attends to solicit other youth)" },
+      yst8d_ntrnt_bh: { id: "yst8d_ntrnt_bh", text: "Youth engages in concerning internet behaviour (e.g., posting, sexting, chatting or meeting strangers online possibly for sexual purposes, has been watched/filmed/photographed in a sexually explicit manner)" },
+      yst8_trffckng: { id: "yst8_trffckng", text: "Youth uses language related to sex trafficking (e.g., “the game”)" },
+      yst8f_awol: { id: "yst8f_awol", text: "Youth runs away or is frequently missing (e.g., gone long periods, frequent short durations, unexplained absences)" },
+      yst8g_housing: { id: "yst8g_housing", text: "Youth lives outside of the family/caregiver home or has unstable housing (e.g., extended stays with friends, periods of homelessness, lives with boy/girlfriend, lives independently, or is housed by someone covering expenses)" },
+      yst8h_id: { id: "yst8h_id", text: "Someone else controls youth’s ID or contact with family/friends (e.g., controlling cell phone and social media use, leaving youth isolated)" },
+      yst8_rprts_sx: { id: "yst8_rprts_sx", text: "Youth reports exchanging sex for money or material goods" },
+      yst9_csh_nd_gd: { id: "yst9_csh_nd_gd", text: "Youth has large amounts of unexplained cash or expensive items (e.g., new purses, shoes, tech devices, gift cards, groceries being assisted by strangers)" },
+      yst9b_hotels: { id: "yst9b_hotels", text: "Youth frequents hotels or has hotel key cards" },
+      yst9c_cll_phns: { id: "yst9c_cll_phns", text: "Youth has several cell phones" },
     };
 
-    // Ordered list of items (as supplied)
     const orderedIds = [
       'yst1f_fnncll__','yst1h_jstc_sys','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh',
       'yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn',
@@ -226,7 +190,6 @@
 
     const orderedQuestions = orderedIds.map(id => BANK[id]).filter(Boolean);
 
-    // Factor sets for scoring (not shown in UI)
     const factor1Set = new Set([
       'yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn',
       'yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf',
@@ -240,7 +203,6 @@
       'yst8g_housing','yst6f_chngd_pp'
     ]);
 
-    // Choice order: No Info → No → Maybe → Yes
     const options = [
       { label: "No Info", value: 1 },
       { label: "No", value: 0 },
@@ -248,53 +210,31 @@
       { label: "Yes", value: 3 },
     ];
 
-    // Render radio group with numbering
     function renderRadioGroup(container, q, idx){
       const field = document.createElement('fieldset');
       field.className = 'field';
       field.id = `field_${q.id}`;
-
       const legend = document.createElement('legend');
       legend.id = `label_${q.id}`;
-      legend.textContent = `${idx+1}. ${q.text}`;
+      legend.innerHTML = `${idx+1}. ${italicizeParentheticals(q.text)}`;
       field.appendChild(legend);
-
-      const group = document.createElement('div');
-      group.className = 'choices';
-
+      const group = document.createElement('div'); group.className = 'choices';
       options.forEach((opt, i) => {
         const choiceId = `${q.id}_${opt.value}`;
-        const label = document.createElement('label');
-        label.className = 'choice';
-        label.setAttribute('for', choiceId);
-
-        const input = document.createElement('input');
-        input.type = 'radio';
-        input.name = q.id;
-        input.id = choiceId;
-        input.value = String(opt.value);
-        if (i === 0) input.required = true; // first option carries required for constraint validation
-        input.addEventListener('change', updateProgress);
-
-        const txt = document.createElement('span');
-        txt.textContent = opt.label;
-
-        label.appendChild(input);
-        label.appendChild(txt);
-        group.appendChild(label);
+        const label = document.createElement('label'); label.className = 'choice'; label.setAttribute('for', choiceId);
+        const input = document.createElement('input'); input.type = 'radio'; input.name = q.id; input.id = choiceId; input.value = String(opt.value);
+        if (i === 0) input.required = true; input.addEventListener('change', updateProgress);
+        const txt = document.createElement('span'); txt.textContent = opt.label;
+        label.appendChild(input); label.appendChild(txt); group.appendChild(label);
       });
-
-      field.appendChild(group);
-      container.appendChild(field);
+      field.appendChild(group); container.appendChild(field);
     }
 
-    // Initial render
     let total = 0;
     (function renderAll(){
       const container = document.getElementById('question-list');
       orderedQuestions.forEach((q, i) => renderRadioGroup(container, q, i));
       total = orderedQuestions.length;
-      // init progress meta for both desktop rail and mobile bar
       document.getElementById('progressCount').textContent = `0/${total} answered`;
       document.getElementById('progressPct').textContent = `0%`;
       document.getElementById('progressCountMobile').textContent = `0/${total} answered`;
@@ -304,11 +244,9 @@
     function updateProgress(){
       const answered = orderedQuestions.reduce((acc, q) => acc + (document.querySelector(`input[name="${q.id}"]:checked`) ? 1 : 0), 0);
       const pct = Math.round((answered/total)*100);
-      // desktop
       document.getElementById('progressCount').textContent = `${answered}/${total} answered`;
       document.getElementById('progressPct').textContent = `${pct}%`;
       document.getElementById('barFill').style.width = pct + '%';
-      // mobile
       document.getElementById('progressCountMobile').textContent = `${answered}/${total} answered`;
       document.getElementById('progressPctMobile').textContent = `${pct}%`;
       document.getElementById('barFillMobile').style.width = pct + '%';
@@ -316,30 +254,15 @@
 
     function validateAndScore(){
       const allFields = Array.from(document.querySelectorAll('.field'));
-      let firstMissing = null;
-      let allFilled = true;
-
+      let firstMissing = null, allFilled = true;
       allFields.forEach(field => {
         const name = field.querySelector('input[type="radio"]').name;
         const checked = document.querySelector(`input[name="${name}"]:checked`);
-        if(!checked){
-          field.classList.add('missing');
-          if(!firstMissing) firstMissing = field;
-          allFilled = false;
-        } else {
-          field.classList.remove('missing');
-        }
+        if(!checked){ field.classList.add('missing'); if(!firstMissing) firstMissing = field; allFilled = false; }
+        else { field.classList.remove('missing'); }
       });
-
-      if(!allFilled){
-        alert('Please answer all questions before continuing.');
-        firstMissing.scrollIntoView({behavior:'smooth', block:'center'});
-        firstMissing.querySelector('input')?.focus({preventScroll:true});
-        return false;
-      }
-
+      if(!allFilled){ alert('Please answer all questions before continuing.'); firstMissing.scrollIntoView({behavior:'smooth', block:'center'}); firstMissing.querySelector('input')?.focus({preventScroll:true}); return false; }
       let f1Score = 0, f2Score = 0;
-
       orderedQuestions.forEach(q => {
         const sel = document.querySelector(`input[name="${q.id}"]:checked`);
         const raw = parseInt(sel.value, 10);
@@ -348,17 +271,11 @@
         if (factor1Set.has(q.id)) f1Score += val;
         if (factor2Set.has(q.id)) f2Score += val;
       });
-
-      localStorage.setItem('factor1_score', f1Score);
-      localStorage.setItem('factor2_score', f2Score);
+      localStorage.setItem('factor1_score', f1Score); localStorage.setItem('factor2_score', f2Score);
       return true;
     }
 
-    document.getElementById('submitBtn').addEventListener('click', () => {
-      if(validateAndScore()){
-        window.location.href = 'results.html';
-      }
-    });
+    document.getElementById('submitBtn').addEventListener('click', () => { if(validateAndScore()){ window.location.href = 'results.html'; }});
   </script>
 </body>
 </html>
