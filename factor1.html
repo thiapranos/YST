@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Assessment — YST Screener</title>
+  <title>Screening items — York-Simcoe Sex Trafficking Screener (YST)</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -16,6 +16,8 @@
       --border: #E8E6E4;
       --focus: #3AC2EF;
       --warn: #D93025;
+      --soft: #FFF1F3;
+      --soft-border: #FECDD3;
     }
 
     * { box-sizing: border-box; }
@@ -26,156 +28,149 @@
       font-family: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background: var(--bg);
       color: var(--ink);
+      padding: 40px 16px;
       display: grid;
       place-items: start center;
-      padding: 40px 16px;
     }
 
-    .wrap { width: 100%; max-width: 860px; }
+    a { color: var(--york-red); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
-    .hero {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px 24px 28px;
-      box-shadow: 0 10px 24px rgba(17,17,17,0.06);
-    }
+    .wrap { width: 100%; max-width: 1000px; }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #fff5f6;
-      color: var(--york-red);
-      border: 1px solid #ffd9de;
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-weight: 600;
-      font-size: 12px;
-      letter-spacing: 0.02em;
-      margin-bottom: 10px;
-    }
+    /* Layout: content + side rail */
+    .layout{ display:grid; grid-template-columns: 1fr; gap:16px; }
+    @media (min-width: 980px){ .layout{ grid-template-columns: minmax(0, 680px) 260px; align-items:start; } }
 
-    h1 {
-      margin: 0 0 6px 0;
-      font-size: clamp(24px, 3.8vw, 34px);
-      line-height: 1.2;
-      letter-spacing: -0.01em;
-    }
+    .panel{ background:var(--card); border:1px solid var(--border); border-radius:16px; box-shadow:0 10px 24px rgba(17,17,17,.06); }
 
-    .time-note { font-size: 14px; color: var(--muted); }
-    .step-note { font-size: 13px; color: var(--muted); }
+    .hero.panel{ padding: 20px 22px; }
 
-    form { margin-top: 8px; }
+    .badge { display:inline-flex; align-items:center; gap:8px; margin-bottom:8px; background:var(--soft); color:var(--york-red); border:1px solid var(--soft-border); border-radius:999px; padding:6px 12px; font-weight:700; font-size:12px; letter-spacing:.02em; }
 
-    .field{
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fff;
-      padding: 12px 12px 6px;
-      margin: 10px 0;
-    }
+    h1{ margin:0 0 6px 0; font-size: clamp(24px, 3.6vw, 34px); line-height:1.2; letter-spacing:-.01em; }
+    .time-note{ font-size:14px; color:var(--muted); }
 
-    .field legend{
-      font-weight: 600;
-      margin-bottom: 8px;
-      padding: 0;
-    }
+    /* Answer Key */
+    .answer-key{ margin-top:12px; padding:12px; border:1px dashed var(--border); border-radius:12px; background:#fff; }
+    .answer-key h2{ margin:0 0 8px 0; font-size:14px; letter-spacing:.2px; }
+    .key-grid{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    @media(max-width:539px){ .key-grid{ grid-template-columns:1fr; } }
+    .key-item{ display:flex; align-items:flex-start; gap:10px; border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:#fff; }
+    .key-item .hint{ font-size:12px; color:var(--muted); margin-top:2px; }
 
-    .choices {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 6px;
-    }
-    @media (min-width: 640px){
-      .choices { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    }
+    /* Form */
+    form{ margin-top: 12px; }
+    .field{ border:1px solid var(--border); border-radius:12px; background:#fff; padding:12px 12px 8px; margin:12px 0; }
+    .field legend{ font-weight:700; margin-bottom:8px; padding:0; font-size:15px; }
 
-    .choice {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      cursor: pointer;
-      user-select: none;
-    }
+    .choices{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; }
+    @media(min-width:640px){ .choices{ grid-template-columns: repeat(4, minmax(0,1fr)); } }
 
-    .choice input[type="radio"]{
-      width: 18px;
-      height: 18px;
-      accent-color: var(--york-red);
-    }
+    .choice{ display:flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:10px; padding:10px 12px; cursor:pointer; user-select:none; }
+    .choice input[type="radio"]{ width:18px; height:18px; accent-color: var(--york-red); }
+    .choice:has(input[type="radio"]:focus-visible){ outline:3px solid var(--focus); outline-offset:2px; }
 
-    .choice:has(input[type="radio"]:focus-visible){
-      outline: 3px solid var(--focus);
-      outline-offset: 2px;
-    }
+    .missing{ border-color: var(--warn) !important; box-shadow: 0 0 0 3px rgba(217,48,37,0.15); }
 
-    .missing{
-      border-color: var(--warn) !important;
-      box-shadow: 0 0 0 3px rgba(217,48,37,0.15);
-    }
+    .cta{ display:flex; flex-direction:column; align-items:center; margin-top:20px; gap:8px; }
+    .btn-primary{ border:none; border-radius:12px; background:var(--york-red); color:#fff; padding:14px 22px; font-weight:700; font-size:16px; cursor:pointer; box-shadow:0 6px 14px rgba(227,24,55,.22); transition: transform .12s ease, box-shadow .12s ease, background .12s ease; width:100%; }
+    .btn-primary:hover{ background:var(--york-red-dark); box-shadow:0 10px 20px rgba(227,24,55,.28); }
+    .btn-primary:active{ transform: translateY(1px); }
 
-    .cta {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-      gap: 8px;
-    }
+    footer{ margin-top: 14px; text-align:center; font-size:13px; color:var(--muted); }
 
-    .btn-primary{
-      appearance: none;
-      border: none;
-      border-radius: 12px;
-      background: var(--york-red);
-      color: #fff;
-      padding: 14px 22px;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 6px 14px rgba(227,24,55,0.22);
-      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
-      width: 100%;
-    }
-    .btn-primary:hover { background: var(--york-red-dark); box-shadow: 0 10px 20px rgba(227,24,55,0.28); }
-    .btn-primary:active { transform: translateY(1px); }
-    .btn-primary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    /* Side progress */
+    .rail{ position: sticky; top: 16px; padding: 14px; }
+    .progress-box{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; }
+    .progress-title{ font-weight:700; font-size:14px; margin:0 0 8px 0; }
+    .bar{ height:10px; background:#f2f2f2; border-radius:999px; overflow:hidden; border:1px solid var(--border); }
+    .bar > .fill{ height:100%; width:0%; background: var(--york-red); transition: width .2s ease; }
+    .progress-meta{ margin-top:8px; font-size:12px; color:var(--muted); display:flex; justify-content:space-between; }
 
-    footer{ margin-top: 14px; text-align: center; font-size: 13px; color: var(--muted); }
+    /* Mobile bottom progress */
+    .mobile-progress{ position: fixed; left:0; right:0; bottom:0; background: rgba(255,255,255,0.98); border-top:1px solid var(--border); padding: 8px 12px; display:flex; justify-content:center; z-index: 50; }
+    .mobile-progress-inner{ width: min(1000px, 100%); display:flex; align-items:center; gap:10px; font-size:12px; color:var(--muted); }
+    .mobile-bar{ flex:1; height:8px; background:#f2f2f2; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+    .mobile-bar .fill{ height:100%; width:0%; background: var(--york-red); transition: width .2s ease; }
+    @media(min-width: 980px){ .mobile-progress{ display:none; } }
   </style>
 </head>
 <body>
-  <main class="wrap" role="main">
-    <section class="hero" aria-labelledby="title">
-      <div class="badge" aria-hidden="true">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" stroke="currentColor" stroke-width="1.5" fill="none"></path><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        Youth Risk Assessment Tool (YST)
-      </div>
-
-      <h1 id="title">Assessment</h1>
-      <div class="time-note">Takes approximately 5–10 minutes to complete.</div>
-      <div class="step-note" aria-live="polite">Step 2 of 3</div>
-
-      <form id="combined-form" novalidate>
-        <div id="question-list"></div>
-
-        <div class="cta">
-          <button type="button" class="btn-primary" id="submitBtn">Submit & View Results</button>
+  <div class="wrap">
+    <div class="layout">
+      <section class="hero panel" aria-labelledby="title">
+        <div class="badge" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" stroke="currentColor" stroke-width="1.5" fill="none"></path><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          York-Simcoe Sex Trafficking Screener (YST)
         </div>
-      </form>
-    </section>
+        <h1 id="title">Screening items</h1>
+        <div class="time-note">Takes approximately 10–15 minutes to complete.</div>
 
-    <footer>
-      <small>Developed by the Teen Relationships Lab at York University in collaboration with child welfare partners. For use by social workers only.</small>
-    </footer>
-  </main>
+        <!-- Answer Key (2x2 cards) -->
+        <div class="answer-key" role="note" aria-labelledby="key-title">
+          <h2 id="key-title">For each item listed below, using your clinical judgement, please check one of the following options:</h2>
+          <ul class="key-grid" aria-label="Answer options">
+            <li class="key-item">
+              <div>
+                <strong>No Info</strong>
+                <div class="hint">Information not available to make a judgment.</div>
+              </div>
+            </li>
+            <li class="key-item">
+              <div>
+                <strong>No</strong>
+                <div class="hint">Information available and definitively not present.</div>
+              </div>
+            </li>
+            <li class="key-item">
+              <div>
+                <strong>Maybe</strong>
+                <div class="hint">Information available and might be present.</div>
+              </div>
+            </li>
+            <li class="key-item">
+              <div>
+                <strong>Yes</strong>
+                <div class="hint">Information available and definitively present.</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <form id="combined-form" novalidate>
+          <div id="question-list"></div>
+          <div class="cta">
+            <button type="button" class="btn-primary" id="submitBtn">Submit & View Results</button>
+          </div>
+        </form>
+
+        <footer>
+          <small>Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions. No distribution of this tool outside your agency.</small>
+        </footer>
+      </section>
+
+      <aside class="rail">
+        <div class="progress-box panel">
+          <div class="progress-title">Progress</div>
+          <div class="bar" aria-hidden="true"><div class="fill" id="barFill"></div></div>
+          <div class="progress-meta"><span id="progressCount">0/0 answered</span><span id="progressPct">0%</span></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Mobile progress (fixed) -->
+  <div class="mobile-progress" role="status" aria-live="polite">
+    <div class="mobile-progress-inner">
+      <span id="progressCountMobile">0/0 answered</span>
+      <div class="mobile-bar"><div class="fill" id="barFillMobile"></div></div>
+      <span id="progressPctMobile">0%</span>
+    </div>
+  </div>
 
   <script>
-    // Question bank
+    // ===== Question bank =====
     const BANK = {
       // Category 1
       yst1f_fnncll__: { id: "yst1f_fnncll__", text: "Youth is financially stable.", reverse: true },
@@ -219,7 +214,7 @@
       yst9c_cll_phns: { id: "yst9c_cll_phns", text: "Youth has several cell phones." },
     };
 
-    // Ordered as per the original YST PDF (only the items you kept)
+    // Ordered list of items (as supplied)
     const orderedIds = [
       'yst1f_fnncll__','yst1h_jstc_sys','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh',
       'yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn',
@@ -245,18 +240,24 @@
       'yst8g_housing','yst6f_chngd_pp'
     ]);
 
+    // Choice order: No Info → No → Maybe → Yes
     const options = [
+      { label: "No Info", value: 1 },
       { label: "No", value: 0 },
-      { label: "No info", value: 1 },
       { label: "Maybe", value: 2 },
       { label: "Yes", value: 3 },
     ];
 
-    function renderRadioGroup(container, q){
+    // Render radio group with numbering
+    function renderRadioGroup(container, q, idx){
       const field = document.createElement('fieldset');
       field.className = 'field';
       field.id = `field_${q.id}`;
-      field.innerHTML = `<legend id="label_${q.id}">${q.text}</legend>`; // no numbering
+
+      const legend = document.createElement('legend');
+      legend.id = `label_${q.id}`;
+      legend.textContent = `${idx+1}. ${q.text}`;
+      field.appendChild(legend);
 
       const group = document.createElement('div');
       group.className = 'choices';
@@ -272,7 +273,8 @@
         input.name = q.id;
         input.id = choiceId;
         input.value = String(opt.value);
-        if (i === 0) input.required = true;
+        if (i === 0) input.required = true; // first option carries required for constraint validation
+        input.addEventListener('change', updateProgress);
 
         const txt = document.createElement('span');
         txt.textContent = opt.label;
@@ -286,10 +288,31 @@
       container.appendChild(field);
     }
 
+    // Initial render
+    let total = 0;
     (function renderAll(){
       const container = document.getElementById('question-list');
-      orderedQuestions.forEach(q => renderRadioGroup(container, q));
+      orderedQuestions.forEach((q, i) => renderRadioGroup(container, q, i));
+      total = orderedQuestions.length;
+      // init progress meta for both desktop rail and mobile bar
+      document.getElementById('progressCount').textContent = `0/${total} answered`;
+      document.getElementById('progressPct').textContent = `0%`;
+      document.getElementById('progressCountMobile').textContent = `0/${total} answered`;
+      document.getElementById('progressPctMobile').textContent = `0%`;
     })();
+
+    function updateProgress(){
+      const answered = orderedQuestions.reduce((acc, q) => acc + (document.querySelector(`input[name="${q.id}"]:checked`) ? 1 : 0), 0);
+      const pct = Math.round((answered/total)*100);
+      // desktop
+      document.getElementById('progressCount').textContent = `${answered}/${total} answered`;
+      document.getElementById('progressPct').textContent = `${pct}%`;
+      document.getElementById('barFill').style.width = pct + '%';
+      // mobile
+      document.getElementById('progressCountMobile').textContent = `${answered}/${total} answered`;
+      document.getElementById('progressPctMobile').textContent = `${pct}%`;
+      document.getElementById('barFillMobile').style.width = pct + '%';
+    }
 
     function validateAndScore(){
       const allFields = Array.from(document.querySelectorAll('.field'));
@@ -339,4 +362,3 @@
   </script>
 </body>
 </html>
-
