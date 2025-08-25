@@ -6,10 +6,7 @@
   <title>Screener Results</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --york-red:#E31837; --york-red-dark:#AF0D1A; --ink:#111111; --muted:#6b7280;
-      --bg:#FAFAFA; --card:#FFFFFF; --border:#E8E6E4; --focus:#3AC2EF; --neutral:#9ca3af;
-    }
+    :root{ --york-red:#E31837; --ink:#111; --muted:#6b7280; --bg:#FAFAFA; --card:#fff; --border:#E8E6E4; --focus:#3AC2EF; --neutral:#9ca3af; }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:40px 16px;display:grid;place-items:start center}
     .wrap{width:100%;max-width:860px}
@@ -17,7 +14,7 @@
     .badge{display:inline-flex;align-items:center;gap:8px;background:#fff5f6;color:var(--york-red);border:1px solid #ffd9de;border-radius:999px;padding:6px 12px;font-weight:700;font-size:12px;letter-spacing:.02em;margin-bottom:10px}
     h1{margin:0 0 4px 0;font-size:clamp(24px,3.6vw,34px);letter-spacing:-.01em}
     .stack{display:grid;gap:16px;margin-top:18px}
-    .card{border:1px solid var(--border);border-radius:12px;padding:16px 16px 18px;background:#fff}
+    .card{border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}
     .head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
     .title{font-size:18px;font-weight:700;margin:0}
     .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -30,13 +27,8 @@
     .hazard svg{display:block;width:100%;height:100%;color:var(--york-red)}
     .okicon svg{display:block;width:100%;height:100%;color:#6b7280}
 
-    /* chart container */
     .chart-wrap{margin-top:12px}
-    .chart-box{border:1px solid var(--border);border-radius:12px;padding:12px}
-    .legend{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:12px;color:#374151}
-    .key{width:12px;height:12px;border-radius:2px;display:inline-block}
-    .key.score{background:var(--york-red)} .key.cutoff{background:var(--neutral)}
-
+    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px}
     details{margin-top:10px}
     summary{cursor:pointer;font-weight:600}
     .list{margin:10px 0 0;padding-left:18px}
@@ -67,7 +59,6 @@
 
           <div class="chart-wrap" aria-label="Exploitation: youth result vs cutoff">
             <div class="chart-box"><div id="f1Chart"></div></div>
-            <div class="legend"><span class="key score"></span> Youth result <span class="key cutoff"></span> Cutoff</div>
           </div>
 
           <details open>
@@ -91,7 +82,6 @@
 
           <div class="chart-wrap" aria-label="Recruitment: youth result vs cutoff">
             <div class="chart-box"><div id="f2Chart"></div></div>
-            <div class="legend"><span class="key score"></span> Youth result <span class="key cutoff"></span> Cutoff</div>
           </div>
 
           <details open>
@@ -123,6 +113,9 @@
 
     const CUTOFFS = { f1: 9, f2: 10 };
     const REVERSED = new Set(['yst1f_fnncll__','yst4_crgrvr_spr','yst4_pr_rltnsh','yst1h_jstc_sys']);
+
+    // Treat value "1" as No-Info by default; set YST_TREAT_ONE_AS_NI='0' to disable.
+    const TREAT_ONE_AS_NI = localStorage.getItem('YST_TREAT_ONE_AS_NI') !== '0';
 
     const LABELS = {
       yst5b_sxl_prtn:"Multiple sexual partners in the last year (4+).",
@@ -160,6 +153,15 @@
     };
 
     // ---------- Helpers ----------
+    const niRegex = /^(ni|no[\s_]?info|no[-\s]?information|unsure|unknown)$/i;
+
+    function getStored(id){
+      const raw = localStorage.getItem(id);
+      if (raw === null) return null;
+      const num = parseInt(raw, 10);
+      return isNaN(num) ? raw : num;
+    }
+
     function sum(ids){
       return ids.reduce((acc,id)=>{
         const v = parseInt(localStorage.getItem(id) || '0', 10);
@@ -181,18 +183,17 @@
       return out;
     }
 
-    function isNoInfo(id, storedRaw){
-      const direct = localStorage.getItem(id + '_ni') === '1' || localStorage.getItem('ni_' + id) === '1';
-      const useOneAsNI = localStorage.getItem('YST_USE_ONE_AS_NI') === '1';
-      return direct || (useOneAsNI && storedRaw === 1);
+    function isNoInfo(id){
+      const flag = localStorage.getItem(id + '_ni') === '1' || localStorage.getItem('ni_' + id) === '1';
+      const val = getStored(id);
+      if (flag) return true;
+      if (val === null) return false;
+      if (typeof val === 'number') return TREAT_ONE_AS_NI && val === 1;
+      return niRegex.test(String(val));
     }
+
     function buildNoInfoList(ids){
-      const out = [];
-      ids.forEach(id=>{
-        const stored = parseInt(localStorage.getItem(id) || '0', 10);
-        if (isNoInfo(id, stored)) out.push(id);
-      });
-      return out;
+      return ids.filter(id => isNoInfo(id));
     }
 
     function tag(raw){ return raw === 3 ? "Yes" : raw === 2 ? "Maybe" : "No"; }
@@ -246,20 +247,27 @@
       });
     }
 
-    // SVG chart (stable across browsers)
+    // SVG with per-bar labels directly beneath each bar
     function drawMiniChartSVG(containerId, value, cutoff, max){
-      const boxW = 180, boxH = 200, barW = 50, gap = 30, padding = 10;
-      const vH = Math.max(0, Math.min(value / max, 1)) * (boxH - padding*2);
-      const cH = Math.max(0, Math.min(cutoff / max, 1)) * (boxH - padding*2);
+      const boxW = 220, boxH = 220, pad = 14;
+      const usableH = boxH - pad*2 - 18; // leave room for labels
+      const barW = 52, gap = 30;
+
+      const clamp = (n)=>Math.max(0, Math.min(n, max));
+      const vH = (clamp(value)/max) * usableH;
+      const cH = (clamp(cutoff)/max) * usableH;
+
+      const baseY = boxH - pad - 18; // baseline above labels
+      const youthX  = pad + 8 + barW + gap; // right bar
+      const cutoffX = pad + 8;               // left bar
 
       const svg = `
         <svg width="${boxW}" height="${boxH}" viewBox="0 0 ${boxW} ${boxH}" role="img" aria-label="Bar chart">
-          <!-- baseline -->
-          <line x1="${padding}" y1="${boxH-padding}" x2="${boxW-padding}" y2="${boxH-padding}" stroke="#e5e7eb"/>
-          <!-- cutoff (grey) -->
-          <rect x="${padding + 15}" y="${boxH - padding - cH}" width="${barW}" height="${cH}" rx="8" fill="var(--neutral)"/>
-          <!-- youth (red) -->
-          <rect x="${padding + 15 + barW + gap}" y="${boxH - padding - vH}" width="${barW}" height="${vH}" rx="8" fill="var(--york-red)"/>
+          <line x1="${pad}" y1="${baseY}" x2="${boxW-pad}" y2="${baseY}" stroke="#e5e7eb"/>
+          <rect x="${cutoffX}" y="${baseY - cH}" width="${barW}" height="${cH}" rx="10" fill="var(--neutral)"/>
+          <rect x="${youthX}"  y="${baseY - vH}" width="${barW}" height="${vH}" rx="10" fill="var(--york-red)"/>
+          <text x="${cutoffX + barW/2}" y="${boxH - pad}" text-anchor="middle" font-size="12" fill="#374151">Cutoff</text>
+          <text x="${youthX + barW/2}"  y="${boxH - pad}" text-anchor="middle" font-size="12" fill="#374151">Youth result</text>
         </svg>`;
       document.getElementById(containerId).innerHTML = svg;
     }
@@ -281,7 +289,6 @@
       fillNoInfo(F1_IDS,'f1NoInfo'); fillNoInfo(F2_IDS,'f2NoInfo');
     }
 
-    // Clear answers when the page is closed (not immediately)
     function clearKeys(){
       [...F1_IDS,...F2_IDS,'factor1_score','factor2_score'].forEach(k=>localStorage.removeItem(k));
     }
