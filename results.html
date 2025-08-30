@@ -4,18 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Screener Results</title>
+
+  <!-- Font fallback performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root{
       --york-red:#E31837; --york-red-dark:#AF0D1A;
       --ink:#111; --muted:#6b7280; --bg:#FAFAFA; --card:#fff; --border:#E8E6E4; --focus:#3AC2EF; --neutral:#9ca3af;
       --soft:#fff5f6; --soft-border:#ffd9de;
-      --ok-bg:#f3f4f6; --ok-text:#374151;
-      --mod-bg:#fde68a; --mod-border:#fcd34d;
-      --contrast-ink:#0a0a0a; --contrast-border:#0a0a0a;
     }
     *{box-sizing:border-box}
-    html:focus-within{scroll-behavior:smooth}
     body{
       margin:0;background:var(--bg);color:var(--ink);
       font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -26,401 +27,420 @@
     .badge{display:inline-flex;align-items:center;gap:8px;background:var(--soft);color:var(--york-red);border:1px solid var(--soft-border);border-radius:999px;padding:6px 12px;font-weight:700;font-size:12px;letter-spacing:.02em;margin-bottom:10px}
     h1{margin:0 0 4px 0;font-size:clamp(24px,3.6vw,34px);letter-spacing:-.01em}
 
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .toggle, .btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-    .btn.primary{background:var(--york-red);color:#fff;border-color:transparent}
-    .toggle:focus-visible, .btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-
     .stack{display:grid;gap:16px;margin-top:18px}
     .card{border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}
     .head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
     .title{font-size:18px;font-weight:700;margin:0}
     .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-    /* Summary */
-    .summary{display:grid;gap:12px}
+    /* Pills + risk lines */
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;font-weight:700;font-size:12px;border:1px solid transparent;min-height:44px}
+    .pill.high{color:#fff;background:var(--york-red)}
+    .pill.mod{color:#111;background:#fde68a;border-color:#fcd34d}
+    .pill.ok{color:#374151;background:#f3f4f6;border-color:#e5e7eb}
+    .riskline{display:flex;align-items:center;gap:10px;margin-top:8px;min-height:40px}
+    .hazard,.okicon{width:18px;height:18px;display:inline-block}
+    .hazard svg,.okicon svg{display:block;width:100%;height:100%}
+
+    /* Ephemeral-data notice */
+    .ephemeral{border:1px dashed var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:#7a1b25;background:#fff6f7;margin:10px 0 14px 0}
+
+    /* Horizontal chart */
+    .chart-wrap{margin-top:12px}
+    /* No layout shift: reserve height */
+    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden;min-height:84px}
+    .chart-box > div{min-height:64px}
+
+    details{margin-top:10px}
+    summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+    .list{margin:10px 0 0;padding-left:18px}
+    .btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer;min-height:44px}
+    .btn.primary{background:var(--york-red);color:#fff;border-color:transparent}
+    .btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+    footer{margin-top:14px;text-align:center;font-size:13px;color:var(--muted)}
+
+    /* Summary card at the top (no numbers) */
+    .summary{display:grid;gap:12px;min-height:160px} /* reserve height to avoid shift */
     .summary-grid{display:grid;grid-template-columns:1fr;gap:10px}
     .summary-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .summary-name{font-weight:700}
     .summary-note{font-size:12px;color:var(--muted)}
-    .sticky{position:sticky;top:0;z-index:2;background:var(--card)}
+    #summaryBlurb{min-height:48px;display:flex;align-items:center}
+    @media (min-width:640px){ .summary-grid{grid-template-columns:1fr 1fr} }
 
-    /* Pills + risk lines */
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px;border:1px solid transparent}
-    .pill[tabindex]{outline-offset:2px}
-    .pill.high{color:#fff;background:var(--york-red)}
-    .pill.mod{color:#111;background:var(--mod-bg);border-color:var(--mod-border)}
-    .pill.ok{color:var(--ok-text);background:var(--ok-bg);border-color:#e5e7eb}
-    .riskline{display:flex;align-items:center;gap:10px;margin-top:8px}
-    .hazard,.okicon{width:18px;height:18px;display:inline-block;color:currentColor}
-    .hazard svg,.okicon svg{display:block;width:100%;height:100%}
-
-    /* Horizontal chart */
-    .chart-wrap{margin-top:12px}
-    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden}
-    .pattern{fill:url(#diag);}
-
-    details{margin-top:10px}
-    summary{cursor:pointer;font-weight:600}
-    .list{margin:10px 0 0;padding-left:18px}
-
-    .btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
-
-    footer{margin-top:14px;text-align:center;font-size:13px;color:var(--muted)}
-
-    /* High-contrast accessibility toggle */
-    .high-contrast .pill.ok{background:#fff;border-color:var(--contrast-border);color:var(--contrast-ink)}
-    .high-contrast .pill.mod{background:#fff;border-color:var(--contrast-border);color:var(--contrast-ink);text-decoration:underline}
-    .high-contrast .chart-box{border-color:var(--contrast-border)}
-    .high-contrast .cut-line{stroke:var(--contrast-ink)!important}
-    .high-contrast .band-outline{stroke:var(--contrast-ink)!important}
-    .high-contrast .value-fill{opacity:1}
-
-    /* Print styles */
+    /* Print polish */
+    .print-only{display:none}
     @media print{
-      @page{ margin: 16mm }
+      @page{ margin:16mm }
       body{ background:#fff; padding:0 }
-      .badge{ display:none }
-      .toolbar, .btns{ display:none !important }
-      .summary{ break-inside:avoid }
-      details{ /* expand all */ }
-      details[open] summary::after{ content:"" }
-      summary{ pointer-events:none }
-      .print-only{ display:block !important }
-      .no-print{ display:none !important }
+      .btns, .badge{ display:none !important }
       .hero{ box-shadow:none; border:0; padding:0 }
+      .print-only{ display:block !important }
       .chart-box{ border:1px solid #000 }
       .cut-label{ fill:#000 !important }
+      .ephemeral{ border-color:#000; background:#fff; color:#000 }
     }
-
-    /* Print-only elements hidden on screen */
-    .print-only{ display:none }
-
-    /* Mobile affordance */
-    .btn, .toggle { min-height:44px } /* comfortable tap target */
-    @media (min-width: 640px){ .summary-grid{grid-template-columns:1fr 1fr} }
   </style>
 </head>
 <body>
   <main class="wrap" role="main">
-    <section class="hero" aria-labelledby="pageTitle">
+    <section class="hero">
       <div class="badge" aria-hidden="true">
-        <!-- SVG lock/shield -->
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" stroke="currentColor" stroke-width="1.5" fill="none"></path><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z" stroke="currentColor" stroke-width="1.5" fill="none"></path><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         York-Simcoe Sex Trafficking Screener (YST)
       </div>
+      <h1>Screener Results</h1>
 
-      <h1 id="pageTitle">Screener Results</h1>
-
-      <!-- Quick toolbar: high-contrast toggle + Print -->
-      <div class="toolbar no-print" role="toolbar" aria-label="Quick actions">
-        <button id="contrastBtn" class="toggle" type="button" aria-pressed="false">High contrast</button>
-        <button class="btn primary" id="printBtn" type="button">Print / Save PDF</button>
+      <!-- Ephemeral-data notice -->
+      <div class="ephemeral" role="note" aria-live="polite">
+        <strong>Heads up:</strong> Results are not stored. If you do not print/save a PDF or record outcomes per your agency procedure, this data will disappear when you leave or refresh this page.
       </div>
 
       <!-- ===== Summary (no numbers) ===== -->
-      <div class="card summary sticky" id="summaryCard" aria-labelledby="summaryTitle">
+      <div class="card summary" id="summaryCard" aria-labelledby="summaryTitle">
         <h2 class="title" id="summaryTitle">Summary</h2>
 
-        <div role="status" aria-live="polite" aria-atomic="true" class="summary-grid">
+        <!-- Print-only timestamp/meta -->
+        <div id="printMeta" class="print-only" style="font-size:12px;color:#333;margin-bottom:6px;"></div>
+
+        <div class="summary-grid">
           <div class="summary-row">
-            <div class="summary-name" id="sumF1Name">ST Exploitation Warning Signs</div>
-            <span class="pill" id="sumF1Pill" tabindex="0" aria-label="Exploitation risk level">Loading…</span>
+            <div class="summary-name">ST Exploitation Warning Signs</div>
+            <span class="pill" id="sumF1Pill">Loading…</span>
           </div>
           <div class="summary-row">
-            <div class="summary-name" id="sumF2Name">ST Recruitment Warning Signs</div>
-            <span class="pill" id="sumF2Pill" tabindex="0" aria-label="Recruitment risk level">Loading…</span>
+            <div class="summary-name">ST Recruitment Warning Signs</div>
+            <span class="pill" id="sumF2Pill">Loading…</span>
           </div>
         </div>
 
-        <div id="summaryBlurb" style="font-size:14px;" role="status" aria-live="polite"></div>
+        <div id="summaryBlurb" style="font-size:14px;"></div>
         <div class="summary-note">Use clinical judgement and local safety procedures. Scores support—do not replace—professional decision-making.</div>
-
-        <!-- Print-only header info -->
-        <div class="print-only" id="printMeta" style="margin-top:8px;font-size:12px;color:#333;"></div>
       </div>
       <!-- ===== End Summary ===== -->
 
       <div class="stack">
         <!-- Factor 1 -->
-        <div class="card" id="exploitation" aria-labelledby="f1Title">
+        <div class="card">
           <div class="head">
-            <h2 class="title" id="f1Title">ST Exploitation Warning Signs</h2>
+            <h2 class="title">ST Exploitation Warning Signs</h2>
             <span id="f1Nums" class="sr-only" aria-live="polite"></span>
           </div>
           <div class="riskline" id="f1RiskLine"><span class="pill" id="f1Pill">Loading…</span></div>
 
           <div class="chart-wrap" aria-label="Exploitation visual indicator">
-            <div class="chart-box"><div id="f1Chart" aria-hidden="true"></div></div>
+            <div class="chart-box"><div id="f1Chart"></div></div>
           </div>
 
           <details open>
-            <summary aria-controls="f1List f1NoInfo">Show risk items</summary>
+            <summary>Show risk items</summary>
             <ul class="list" id="f1List"></ul>
           </details>
 
           <details>
-            <summary aria-controls="f1NoInfo">Items marked “No Info” (investigate)</summary>
+            <summary>Items marked “No Info” (investigate)</summary>
             <ul class="list" id="f1NoInfo"></ul>
           </details>
         </div>
 
         <!-- Factor 2 -->
-        <div class="card" id="recruitment" aria-labelledby="f2Title">
+        <div class="card">
           <div class="head">
-            <h2 class="title" id="f2Title">ST Recruitment Warning Signs</h2>
+            <h2 class="title">ST Recruitment Warning Signs</h2>
             <span id="f2Nums" class="sr-only" aria-live="polite"></span>
           </div>
           <div class="riskline" id="f2RiskLine"><span class="pill" id="f2Pill">Loading…</span></div>
 
           <div class="chart-wrap" aria-label="Recruitment visual indicator">
-            <div class="chart-box"><div id="f2Chart" aria-hidden="true"></div></div>
+            <div class="chart-box"><div id="f2Chart"></div></div>
           </div>
 
           <details open>
-            <summary aria-controls="f2List f2NoInfo">Show risk items</summary>
+            <summary>Show risk items</summary>
             <ul class="list" id="f2List"></ul>
           </details>
 
           <details>
-            <summary aria-controls="f2NoInfo">Items marked “No Info” (investigate)</summary>
+            <summary>Items marked “No Info” (investigate)</summary>
             <ul class="list" id="f2NoInfo"></ul>
           </details>
         </div>
 
-        <div class="btns no-print">
-          <button class="btn primary" id="printBtn2" type="button">Print / Save PDF</button>
+        <div class="btns">
+          <button class="btn primary" id="printBtn">Print / Save PDF</button>
         </div>
       </div>
     </section>
 
     <footer>
-      <small>
-        <span id="versionTag">YST Screener v1.0</span> •
-        Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions. No distribution of this tool outside your agency.
-      </small>
+      <small>Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions. No distribution of this tool outside your agency.</small>
     </footer>
   </main>
 
   <script>
-    /* ---------------- Data (unchanged) ---------------- */
-    const F1_IDS=['yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn','yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf','yst8b_trnsprtt','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8h_id','yst8_rprts_sx','yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'];
-    const F2_IDS=['yst1f_fnncll__','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh','yst6c_fearful','yst6d_self_hrm','yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t','yst8g_housing','yst6f_chngd_pp'];
+    // ---------- Data ----------
+    const F1_IDS = ['yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn','yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf','yst8b_trnsprtt','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8h_id','yst8_rprts_sx','yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'];
+    const F2_IDS = ['yst1f_fnncll__','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh','yst6c_fearful','yst6d_self_hrm','yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t','yst8g_housing','yst6f_chngd_pp'];
 
-    const THRESH={ f1:{moderateMin:9,moderateMax:14,highMin:15}, f2:{highMin:10} };
-    const REVERSED=new Set(['yst1f_fnncll__','yst4_crgrvr_spr','yst4_pr_rltnsh','yst1h_jstc_sys']);
-    const TREAT_ONE_AS_NI=localStorage.getItem('YST_TREAT_ONE_AS_NI')!=='0';
-    const niRegex=/^(ni|no[\s_]?info|no[-\s]?information|unsure|unknown)$/i;
-
-    const LABELS={ /* …same as before… */ 
-      yst5b_sxl_prtn:"Multiple sexual partners in the last year (4+).",
-      yst5c_nn_dscls:"Non-disclosing about romantic partner.",
-      yst5d_stis:"Treated/tested for multiple STIs/UTIs.",
-      yst5_ldr_prtnr:"Romantic partners who are significantly older.",
-      yst5f_bsv_prtn:"Exposed to abusive/controlling partner.",
-      yst7_cnnctns_x:"Connected to exploited people/known traffickers.",
-      yst7b_gang:"Gang affiliation/contact.",
-      yst7d_trffckn_:"Spends time in locations known for sex trafficking.",
-      yst7e_hides_nf:"Answers are vague or misleading.",
-      yst8b_trnsprtt:"Hitch-hikes/travels with unknown individuals.",
-      yst8d_ntrnt_bh:"Concerning internet behaviour.",
-      yst8_trffckng:"Uses language related to sex trafficking.",
-      yst8f_awol:"Runs away/frequently missing.",
-      yst8h_id:"Someone else controls ID or family contact.",
-      yst8_rprts_sx:"Reports exchanging sex for money or goods.",
-      yst9_csh_nd_gd:"Large amounts of unexplained cash/expensive items.",
-      yst9b_hotels:"Frequents hotels/has hotel key cards.",
-      yst9c_cll_phns:"Several cell phones.",
-      yst1f_fnncll__:"Financially stable.",
-      yst3a_sexul_bs:"Experienced sexual abuse.",
-      yst4_crgrvr_spr:"Caregiver provides adequate supervision.",
-      yst4_pr_rltnsh:"Peer relationships appear safe.",
-      yst6c_fearful:"Appears on edge/hypervigilant.",
-      yst6d_self_hrm:"Self-harm behaviour or suicidal ideation.",
-      yst7f_neds_nmt:"Basic needs unmet.",
-      yst8c_schl_ttn:"Sporadic school attendance.",
-      yst7c_xpsd_dr_:"Exposed to drugs/alcohol/drug trade.",
-      yst8a_sbstnc_s:"Substance use difficulties.",
-      yst1h_jstc_sys:"No justice system involvement.",
-      yst6g_physcl_t:"Signs of physical trauma.",
-      yst8g_housing:"Lives outside caregiver home.",
-      yst6f_chngd_pp:"Significant/sudden change in appearance."
+    // Thresholds (internally used; not displayed)
+    const THRESH = {
+      f1: { moderateMin: 9, moderateMax: 14, highMin: 15 }, // Exploitation: Low <9, Mod 9–14, High 15+
+      f2: { highMin: 10 }                                   // Recruitment: Low <10, High >=10 (no moderate yet)
     };
 
-    /* ---------------- Helpers ---------------- */
-    function getStored(id){ const raw=localStorage.getItem(id); if(raw===null) return null; const num=parseInt(raw,10); return isNaN(num)?raw:num; }
-    function sum(ids){ return ids.reduce((a,id)=>{ const v=parseInt(localStorage.getItem(id)||'0',10); return a+(isNaN(v)?0:v); },0); }
-    function buildDisplayList(ids){
-      const out=[]; ids.forEach(id=>{
-        const stored=parseInt(localStorage.getItem(id)||'0',10); if(isNaN(stored)) return;
-        const isRev=REVERSED.has(id); const raw=isRev?(3-stored):stored;
-        if((!isRev && raw>=2) || (isRev && raw===0)){ out.push({id,raw}); }
-      }); return out;
+    // No reverse-coding here (factor page already normalized)
+    const REVERSED = new Set();
+
+    // Treat "1" as No-Info by default; set YST_TREAT_ONE_AS_NI='0' to disable.
+    const TREAT_ONE_AS_NI = localStorage.getItem('YST_TREAT_ONE_AS_NI') !== '0';
+    const niRegex = /^(ni|no[\s_]?info|no[-\s]?information|unsure|unknown)$/i;
+
+    // Wording synced with factor page
+    const LABELS = {
+      yst5b_sxl_prtn:"Youth has had multiple sexual partners in the last year (4 or more)",
+      yst5c_nn_dscls:"Youth is non-disclosing when it comes to sharing about their romantic partner",
+      yst5d_stis:"Youth has been treated or tested for having multiple STIs/UTIs (e.g., kidney infections)",
+      yst5_ldr_prtnr:"Youth has romantic partners who are significantly older (e.g., significant age gap between youth and romantic partner—4 or more years).",
+      yst5f_bsv_prtn:"Youth has been exposed to an abusive or controlling intimate partner",
+      yst7_cnnctns_x:"Youth is connected to people who are exploited (i.e., trafficked), who buy or sell sex or who are known/suspected to be sex traffickers.",
+      yst7b_gang:"Youth has gang affiliation/contact (e.g., tattoos suggestive of branding or gang insignia).",
+      yst7d_trffckn_:"Youth spends time in locations that are known as venues for sex trafficking (e.g., physical or online spaces where youth congregate without caregiver supervision).",
+      yst7e_hides_nf:"Youth’s answers to questions about their age, whereabouts, residence, or relationships are vague or misleading.",
+      yst8b_trnsprtt:"Youth hitch-hikes or travels in cars with unknown individuals (e.g., receives or solicits drives from unknown individuals/strangers, has Ubers sent to them, has a driver).",
+      yst8d_ntrnt_bh:"Youth engages in concerning internet behaviour (e.g., posting, “sexting”, chatting or meeting  with strangers online possibly for sexual purposes, has been watched, filmed, or photographed in a sexually explicit manner).",
+      yst8_trffckng:"Youth uses language related to sex trafficking (e.g., “the game”)",
+      yst8f_awol:"Youth runs away/is gone and their whereabouts are unknown (e.g., for long periods of time, frequently for short durations, unexplained absence).",
+      yst8h_id:"Someone else is controlling the youth’s ID documents and/or contact with family or friends, leaving the youth socially isolated (i.e., controlling cell phone and social media use).",
+      yst8_rprts_sx:"Youth reports exchanging sex for money or material goods",
+      yst9_csh_nd_gd:"Youth has large amounts of unexplained cash, or expensive items (e.g., new purses, shoes, technical devices, gift cards, groceries being assisted by strangers).",
+      yst9b_hotels:"Youth frequents hotel rooms and/or has hotel key cards in their possession.",
+      yst9c_cll_phns:"Youth has several cell phones",
+      yst1f_fnncll__:"Youth is financially stable (e.g., has stable housing, caregiver is able to provide, children, pets, family obligations are met, is not being forced to give their money to someone)",
+      yst3a_sexul_bs:"Youth has experienced sexual abuse",
+      yst4_crgrvr_spr:"Parent/caregiver is unable to provide adequate supervision",
+      yst4_pr_rltnsh:"Youth has peer relationships that appear unsafe (e.g., peers who are a negative influence, significantly older peers, unstable peer group) and/or experiences social exclusion.",
+      yst6c_fearful:"Youth appears on edge, preoccupied with safety, or hypervigilant.",
+      yst6d_self_hrm:"Youth presents with self-harming behaviour and/or expresses suicidal ideation (i.e., thoughts about dying or ending life)",
+      yst7f_neds_nmt:"Youth describes basic needs as being unmet (e.g., financially and/or emotionally)",
+      yst8c_schl_ttn:"Youth has sporadic school attendance (e.g., skips multiple days or is not attending, attends to solicit other youth).",
+      yst7c_xpsd_dr_:"Youth is exposed to drugs/alcohol, and/or the buying and selling of drugs.",
+      yst8a_sbstnc_s:"Youth presents with substance use difficulties (e.g., appears to be under the influence, found with alcohol/drugs)",
+      yst1h_jstc_sys:"Youth has past or current involvement with the justice system (e.g., contact with police, involvement with criminal activities)",
+      yst6g_physcl_t:"Youth shows signs of physical trauma (e.g., black eyes, cigarette burns, or broken bones)",
+      yst8g_housing:"Youth lives outside of family/caregiver home (e.g., stays overnight at friends for extended time, periods of homelessness, unstable housing, with a boy/girlfriend), lives independently and/or is being housed by someone who is paying for their living expenses.",
+      yst6f_chngd_pp:"Youth presents a significant and sudden change in appearance (e.g., dress, hygiene, weight, tattoos)"
+    };
+
+    // ---------- Helpers ----------
+    function getStored(id){
+      const raw = localStorage.getItem(id);
+      if (raw === null) return null;
+      const num = parseInt(raw, 10);
+      return isNaN(num) ? raw : num;
     }
+
+    // Ignore "No Info" (1) in sums when TREAT_ONE_AS_NI is on
+    function sum(ids){
+      return ids.reduce((acc,id)=>{
+        const v = parseInt(localStorage.getItem(id) || '0', 10);
+        if (isNaN(v)) return acc;
+        if (TREAT_ONE_AS_NI && v === 1) return acc;
+        return acc + v;
+      },0);
+    }
+
+    // Build display list with stored values as-is (no reverse flipping)
+    function buildDisplayList(ids){
+      const out = [];
+      ids.forEach(id=>{
+        const stored = parseInt(localStorage.getItem(id) || '0', 10);
+        if (isNaN(stored)) return;
+        const raw = stored;
+        if (raw >= 2){ out.push({ id, raw }); } // show Maybe / Yes
+      });
+      return out;
+    }
+
     function isNoInfo(id){
-      const flag=localStorage.getItem(id+'_ni')==='1'||localStorage.getItem('ni_'+id)==='1';
-      const val=getStored(id); if(flag) return true; if(val===null) return false;
-      if(typeof val==='number') return TREAT_ONE_AS_NI && val===1;
+      const flag = localStorage.getItem(id + '_ni') === '1' || localStorage.getItem('ni_' + id) === '1';
+      const val = getStored(id);
+      if (flag) return true;
+      if (val === null) return false;
+      if (typeof val === 'number') return TREAT_ONE_AS_NI && val === 1;
       return niRegex.test(String(val));
     }
-    function buildNoInfoList(ids){ return ids.filter(id=>isNoInfo(id)); }
-    function tag(raw){ return raw===3?'Yes':raw===2?'Maybe':'No'; }
+    function buildNoInfoList(ids){ return ids.filter(id => isNoInfo(id)); }
+    function tag(raw){ return raw === 3 ? "Yes" : raw === 2 ? "Maybe" : "No"; }
 
-    function levelF1(score){ if(score>=THRESH.f1.highMin) return 'High'; if(score>=THRESH.f1.moderateMin && score<=THRESH.f1.moderateMax) return 'Moderate'; return 'Low'; }
-    function levelF2(score){ return score>=THRESH.f2.highMin ? 'High' : 'Low'; }
+    // Risk level calculators (visual-only; no numbers shown)
+    function levelF1(score){
+      if (score >= THRESH.f1.highMin) return 'High';
+      if (score >= THRESH.f1.moderateMin && score <= THRESH.f1.moderateMax) return 'Moderate';
+      return 'Low';
+    }
+    function levelF2(score){ return score >= THRESH.f2.highMin ? 'High' : 'Low'; }
 
-    function setRiskLine(containerId,pillId,level,label){
-      const line=document.getElementById(containerId);
-      const pill=document.getElementById(pillId);
-      pill.className='pill '+(level==='High'?'high':level==='Moderate'?'mod':'ok');
-      pill.textContent=level+' risk';
-      pill.setAttribute('aria-label',`${label} ${level} risk`);
+    // Line + pill
+    function setRiskLine(containerId, pillId, level, label){
+      const line = document.getElementById(containerId);
+      const pill = document.getElementById(pillId);
 
-      const oldMsg=line.querySelector('.risk-msg'); if(oldMsg) oldMsg.remove();
-      const oldIcon=line.querySelector('.hazard, .okicon'); if(oldIcon) oldIcon.remove();
+      pill.className = 'pill ' + (level==='High' ? 'high' : level==='Moderate' ? 'mod' : 'ok');
+      pill.textContent = level + ' risk';
 
-      const iconWrap=document.createElement('span');
-      iconWrap.className=(level==='High')?'hazard':'okicon';
-      iconWrap.innerHTML=(level==='High')
-        ? '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
-        : '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      const oldMsg = line.querySelector('.risk-msg'); if (oldMsg) oldMsg.remove();
+      const oldIcon = line.querySelector('.hazard, .okicon'); if (oldIcon) oldIcon.remove();
 
-      const msg=document.createElement('span');
-      msg.className='risk-msg';
-      msg.textContent=(level==='High') ? `Indicators suggest high risk related to ${label}.`
-        : (level==='Moderate') ? `Indicators suggest moderate concern related to ${label}.`
-        : `Indicators do not suggest high risk related to ${label}.`;
+      const iconWrap = document.createElement('span');
+      iconWrap.className = (level==='High') ? 'hazard' : 'okicon';
+      iconWrap.innerHTML = (level==='High')
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
-      line.insertBefore(iconWrap,line.firstChild);
+      const msg = document.createElement('span');
+      msg.className = 'risk-msg';
+      msg.textContent = (level==='High')
+        ? `Indicators suggest high risk related to ${label}.`
+        : (level==='Moderate')
+          ? `Indicators suggest moderate concern related to ${label}.`
+          : `Indicators do not suggest high risk related to ${label}.`;
+
+      line.insertBefore(iconWrap, line.firstChild);
       line.appendChild(msg);
     }
 
-    // Horizontal bars, no numbers; include pattern fill for moderate band in F1
-    function barSVGDefs(){
-      return `
-        <defs>
-          <pattern id="diag" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="8" stroke="#b45309" stroke-width="2" />
-          </pattern>
-        </defs>`;
-    }
+    // ===== Horizontal bars without numbers =====
+    function drawHorizontalBarF1(containerId, value, max){
+      const w = 520, h = 64, pad = 14;
+      const usableW = w - pad*2;
+      const clamp = n => Math.max(0, Math.min(n, max));
+      const valW = (clamp(value)/max)*usableW;
 
-    function drawHorizontalBarF1(containerId,value,max){
-      const w=520,h=64,pad=14,usableW=w-pad*2,clamp=n=>Math.max(0,Math.min(n,max)),valW=(clamp(value)/max)*usableW;
-      const modStart=THRESH.f1.moderateMin,modEnd=THRESH.f1.moderateMax,highStart=THRESH.f1.highMin;
-      const modX=pad+(modStart/max)*usableW,modW=((modEnd-modStart)/max)*usableW,highX=pad+(highStart/max)*usableW;
-      const svg=`
+      const modStart = THRESH.f1.moderateMin, modEnd = THRESH.f1.moderateMax, highStart = THRESH.f1.highMin;
+      const modX = pad + (modStart/max)*usableW;
+      const modW = ((modEnd - modStart)/max)*usableW;
+      const highX = pad + (highStart/max)*usableW;
+
+      const svg = `
         <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Visual bar with moderate band and cut-off">
-          ${barSVGDefs()}
-          <rect x="${pad}" y="${h/2-10}" width="${usableW}" height="20" rx="10" fill="#f3f4f6" stroke="#e5e7eb"/>
-          <rect x="${modX}" y="${h/2-10}" width="${modW}" height="20" rx="8" class="band-outline" fill="${'url(#diag)'}" opacity="0.35"/>
-          <rect x="${pad}" y="${h/2-10}" width="${valW}" height="20" rx="10" class="value-fill" fill="var(--york-red)" />
-          <line class="cut-line" x1="${highX}" y1="${h/2-14}" x2="${highX}" y2="${h/2+14}" stroke="#111" stroke-width="2"/>
-          <text class="cut-label" x="${highX}" y="${h/2-18}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
+          <rect x="${pad}" y="${h/2 - 10}" width="${usableW}" height="20" rx="10" fill="#f3f4f6" stroke="#e5e7eb"/>
+          <rect x="${modX}" y="${h/2 - 10}" width="${modW}" height="20" rx="8" fill="#fde68a" opacity="0.6"/>
+          <rect x="${pad}" y="${h/2 - 10}" width="${valW}" height="20" rx="10" fill="var(--york-red)"/>
+          <line class="cut-line" x1="${highX}" y1="${h/2 - 14}" x2="${highX}" y2="${h/2 + 14}" stroke="#111" stroke-width="2"/>
+          <text class="cut-label" x="${highX}" y="${h/2 - 18}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
         </svg>`;
-      document.getElementById(containerId).innerHTML=svg;
+      document.getElementById(containerId).innerHTML = svg;
     }
 
-    function drawHorizontalBarF2(containerId,value,max){
-      const w=520,h=64,pad=14,usableW=w-pad*2,clamp=n=>Math.max(0,Math.min(n,max)),valW=(clamp(value)/max)*usableW;
-      const cutX=pad+(THRESH.f2.highMin/max)*usableW;
-      const svg=`
+    function drawHorizontalBarF2(containerId, value, max){
+      const w = 520, h = 64, pad = 14;
+      const usableW = w - pad*2;
+      const clamp = n => Math.max(0, Math.min(n, max));
+      const valW = (clamp(value)/max)*usableW;
+
+      const cutX = pad + (THRESH.f2.highMin/max)*usableW;
+
+      const svg = `
         <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Visual bar with cut-off">
-          <rect x="${pad}" y="${h/2-10}" width="${usableW}" height="20" rx="10" fill="#f3f4f6" stroke="#e5e7eb"/>
-          <rect x="${pad}" y="${h/2-10}" width="${valW}" height="20" rx="10" class="value-fill" fill="var(--york-red)"/>
-          <line class="cut-line" x1="${cutX}" y1="${h/2-14}" x2="${cutX}" y2="${h/2+14}" stroke="#111" stroke-width="2"/>
-          <text class="cut-label" x="${cutX}" y="${h/2-18}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
+          <rect x="${pad}" y="${h/2 - 10}" width="${usableW}" height="20" rx="10" fill="#f3f4f6" stroke="#e5e7eb"/>
+          <rect x="${pad}" y="${h/2 - 10}" width="${valW}" height="20" rx="10" fill="var(--york-red)"/>
+          <line class="cut-line" x1="${cutX}" y1="${h/2 - 14}" x2="${cutX}" y2="${h/2 + 14}" stroke="#111" stroke-width="2"/>
+          <text class="cut-label" x="${cutX}" y="${h/2 - 18}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
         </svg>`;
-      document.getElementById(containerId).innerHTML=svg;
+      document.getElementById(containerId).innerHTML = svg;
     }
 
-    // Summary blurbs (no numbers)
-    const BLURBS={
+    // ===== Summary blurb placeholders (no numbers) =====
+    const BLURBS = {
       'F1:High|F2:High':'Both exploitation and recruitment indicators are elevated. Prioritize immediate safety planning and consult agency protocols.',
-      'F1:High|F2:Low':'Exploitation indicators are elevated while recruitment indicators are not. Review safety supports; explore concealed contexts.',
-      'F1:Moderate|F2:High':'Recruitment indicators are elevated with a moderate pattern for exploitation. Focus on prevention and rapid monitoring.',
-      'F1:Moderate|F2:Low':'A moderate pattern is present for exploitation with low recruitment indicators. Continue routine monitoring and bolster protective supports.',
+      'F1:High|F2:Low':'Exploitation indicators are elevated while recruitment indicators are not. Review current safety and supports; explore recent changes or concealed contexts.',
+      'F1:Moderate|F2:High':'Recruitment indicators are elevated alongside a moderate pattern for exploitation. Focus on prevention and rapid monitoring.',
+      'F1:Moderate|F2:Low':'A moderate pattern is present for exploitation, with low recruitment indicators. Continue routine monitoring and engage protective supports.',
       'F1:Low|F2:High':'Recruitment indicators are elevated while exploitation indicators are low. Emphasize engagement, education, and proactive safety steps.',
       'F1:Low|F2:Low':'Current indicators do not suggest elevated risk across factors. Maintain regular contact and re-screen if circumstances change.'
     };
-    function summaryBlurb(l1,l2){ return BLURBS[`F1:${l1}|F2:${l2}`]||''; }
+    function summaryBlurb(l1,l2){ return BLURBS[`F1:${l1}|F2:${l2}`] || ''; }
 
-    function fillList(ids,ulId){
-      const ul=document.getElementById(ulId); ul.innerHTML='';
-      const items=buildDisplayList(ids);
-      if(!items.length){ ul.innerHTML='<li>No items to display.</li>'; return; }
-      items.forEach(({id,raw})=>{
-        const li=document.createElement('li'); li.textContent=`${LABELS[id]||id} — ${tag(raw)}`; ul.appendChild(li);
+    // ---------- Render ----------
+    function fillList(ids, ulId){
+      const ul = document.getElementById(ulId);
+      ul.innerHTML = '';
+      const items = buildDisplayList(ids);
+      if (!items.length){ ul.innerHTML = '<li>No items to display.</li>'; return; }
+      items.forEach(({id, raw})=>{
+        const li = document.createElement('li');
+        li.textContent = `${LABELS[id] || id} — ${tag(raw)}`;
+        ul.appendChild(li);
       });
     }
-    function fillNoInfo(ids,ulId){
-      const ul=document.getElementById(ulId); ul.innerHTML='';
-      const items=buildNoInfoList(ids);
-      if(!items.length){ ul.innerHTML='<li>No “No Info” items.</li>'; return; }
-      items.forEach(id=>{ const li=document.createElement('li'); li.textContent=LABELS[id]||id; ul.appendChild(li); });
+    function fillNoInfo(ids, ulId){
+      const ul = document.getElementById(ulId);
+      ul.innerHTML = '';
+      const items = buildNoInfoList(ids);
+      if (!items.length){ ul.innerHTML = '<li>No “No Info” items.</li>'; return; }
+      items.forEach(id=>{
+        const li = document.createElement('li');
+        li.textContent = LABELS[id] || id;
+        ul.appendChild(li);
+      });
     }
 
     function render(){
-      // Timestamp for print-only header
+      // Print meta timestamp
       const dt=new Date();
       const stamp=dt.toLocaleString(undefined,{dateStyle:'medium', timeStyle:'short'});
       document.getElementById('printMeta').textContent = `Screened on ${stamp} • This printout is generated from a device-only session.`;
-      // Version tag also echoed to print header (visually)
-      const version=document.getElementById('versionTag')?.textContent||'';
-      document.getElementById('printMeta').textContent += version ? ` • ${version}` : '';
 
-      const f1=sum(F1_IDS), f2=sum(F2_IDS);
-      const f1Max=F1_IDS.length*3, f2Max=F2_IDS.length*3;
+      const f1 = sum(F1_IDS), f2 = sum(F2_IDS);
+      const f1Max = F1_IDS.length*3, f2Max = F2_IDS.length*3;
 
-      const L1=levelF1(f1), L2=levelF2(f2);
+      const L1 = levelF1(f1);
+      const L2 = levelF2(f2);
 
       // Summary pills (no numbers)
-      const sumF1Pill=document.getElementById('sumF1Pill');
-      sumF1Pill.className='pill '+(L1==='High'?'high':L1==='Moderate'?'mod':'ok');
-      sumF1Pill.textContent=L1+' risk';
+      const sumF1Pill = document.getElementById('sumF1Pill');
+      sumF1Pill.className = 'pill ' + (L1==='High' ? 'high' : L1==='Moderate' ? 'mod' : 'ok');
+      sumF1Pill.textContent = L1 + ' risk';
 
-      const sumF2Pill=document.getElementById('sumF2Pill');
-      sumF2Pill.className='pill '+(L2==='High'?'high':'ok');
-      sumF2Pill.textContent=L2+' risk';
+      const sumF2Pill = document.getElementById('sumF2Pill');
+      sumF2Pill.className = 'pill ' + (L2==='High' ? 'high' : 'ok');
+      sumF2Pill.textContent = L2 + ' risk';
 
-      document.getElementById('summaryBlurb').textContent=summaryBlurb(L1,L2);
+      document.getElementById('summaryBlurb').textContent = summaryBlurb(L1, L2);
 
-      // SR-only descriptions (still no numeric values spoken)
-      document.getElementById('f1Nums').textContent='Exploitation indicator bar with moderate band and high cut-off.';
-      document.getElementById('f2Nums').textContent='Recruitment indicator bar with high cut-off.';
+      // SR-only descriptions (no numeric values)
+      document.getElementById('f1Nums').textContent = 'Exploitation indicator bar with moderate band and high cut-off.';
+      document.getElementById('f2Nums').textContent = 'Recruitment indicator bar with high cut-off.';
 
       // Risk lines
-      setRiskLine('f1RiskLine','f1Pill',L1,'exploitation warning signs');
-      setRiskLine('f2RiskLine','f2Pill',L2,'recruitment warning signs');
+      setRiskLine('f1RiskLine','f1Pill', L1, 'exploitation warning signs');
+      setRiskLine('f2RiskLine','f2Pill', L2, 'recruitment warning signs');
 
       // Charts
-      drawHorizontalBarF1('f1Chart',f1,f1Max);
-      drawHorizontalBarF2('f2Chart',f2,f2Max);
+      drawHorizontalBarF1('f1Chart', f1, f1Max);
+      drawHorizontalBarF2('f2Chart', f2, f2Max);
 
       // Lists
       fillList(F1_IDS,'f1List'); fillList(F2_IDS,'f2List');
       fillNoInfo(F1_IDS,'f1NoInfo'); fillNoInfo(F2_IDS,'f2NoInfo');
     }
 
-    function clearKeys(){ [...F1_IDS,...F2_IDS,'factor1_score','factor2_score'].forEach(k=>localStorage.removeItem(k)); }
-
-    // High-contrast toggle
-    const contrastBtn=document.getElementById('contrastBtn');
-    function toggleContrast(){
-      const on=document.body.classList.toggle('high-contrast');
-      contrastBtn.setAttribute('aria-pressed', String(on));
+    function clearKeys(){
+      [...F1_IDS,...F2_IDS,'factor1_score','factor2_score'].forEach(k=>localStorage.removeItem(k));
     }
-    contrastBtn.addEventListener('click',toggleContrast);
 
-    // Print buttons
     document.getElementById('printBtn').addEventListener('click',()=>window.print());
-    document.getElementById('printBtn2').addEventListener('click',()=>window.print());
-
     render();
-
-    // Hard clear on exit
     window.addEventListener('pagehide',clearKeys);
     window.addEventListener('beforeunload',clearKeys);
+
+    // Offline-friendly: service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{});
+      });
+    }
   </script>
 </body>
 </html>
