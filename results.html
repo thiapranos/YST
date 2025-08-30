@@ -6,29 +6,37 @@
   <title>Screener Results</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{ --york-red:#E31837; --ink:#111; --muted:#6b7280; --bg:#FAFAFA; --card:#fff; --border:#E8E6E4; --focus:#3AC2EF; --neutral:#9ca3af; }
+    :root{
+      --york-red:#E31837; --york-red-dark:#AF0D1A;
+      --ink:#111; --muted:#6b7280; --bg:#FAFAFA; --card:#fff; --border:#E8E6E4; --focus:#3AC2EF; --neutral:#9ca3af;
+      --soft:#fff5f6; --soft-border:#ffd9de;
+    }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:40px 16px;display:grid;place-items:start center}
     .wrap{width:100%;max-width:860px}
     .hero{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 10px 24px rgba(17,17,17,.06)}
-    .badge{display:inline-flex;align-items:center;gap:8px;background:#fff5f6;color:var(--york-red);border:1px solid #ffd9de;border-radius:999px;padding:6px 12px;font-weight:700;font-size:12px;letter-spacing:.02em;margin-bottom:10px}
+    .badge{display:inline-flex;align-items:center;gap:8px;background:var(--soft);color:var(--york-red);border:1px solid var(--soft-border);border-radius:999px;padding:6px 12px;font-weight:700;font-size:12px;letter-spacing:.02em;margin-bottom:10px}
     h1{margin:0 0 4px 0;font-size:clamp(24px,3.6vw,34px);letter-spacing:-.01em}
+
     .stack{display:grid;gap:16px;margin-top:18px}
     .card{border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}
     .head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
     .title{font-size:18px;font-weight:700;margin:0}
     .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
+    /* Pills + risk lines */
     .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px;border:1px solid transparent}
     .pill.high{color:#fff;background:var(--york-red)}
+    .pill.mod{color:#111;background:#fde68a;border-color:#fcd34d}
     .pill.ok{color:#374151;background:#f3f4f6;border-color:#e5e7eb}
     .riskline{display:flex;align-items:center;gap:10px;margin-top:8px}
     .hazard,.okicon{width:18px;height:18px;display:inline-block}
-    .hazard svg{display:block;width:100%;height:100%;color:var(--york-red)}
-    .okicon svg{display:block;width:100%;height:100%;color:#6b7280}
+    .hazard svg,.okicon svg{display:block;width:100%;height:100%}
 
+    /* Horizontal chart */
     .chart-wrap{margin-top:12px}
-    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px}
+    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden}
+
     details{margin-top:10px}
     summary{cursor:pointer;font-weight:600}
     .list{margin:10px 0 0;padding-left:18px}
@@ -37,6 +45,14 @@
     .btn.primary{background:var(--york-red);color:#fff;border-color:transparent}
     .btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
     footer{margin-top:14px;text-align:center;font-size:13px;color:var(--muted)}
+
+    /* Summary card at the top (no numbers) */
+    .summary{display:grid;gap:12px}
+    .summary-grid{display:grid;grid-template-columns:1fr;gap:10px}
+    .summary-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .summary-name{font-weight:700}
+    .summary-note{font-size:12px;color:var(--muted)}
+    @media (min-width: 640px){ .summary-grid{grid-template-columns:1fr 1fr} }
   </style>
 </head>
 <body>
@@ -48,6 +64,26 @@
       </div>
       <h1>Screener Results</h1>
 
+      <!-- ===== Summary (no numbers) ===== -->
+      <div class="card summary" id="summaryCard" aria-labelledby="summaryTitle">
+        <h2 class="title" id="summaryTitle">Summary</h2>
+
+        <div class="summary-grid">
+          <div class="summary-row">
+            <div class="summary-name">ST Exploitation Warning Signs</div>
+            <span class="pill" id="sumF1Pill">Loading…</span>
+          </div>
+          <div class="summary-row">
+            <div class="summary-name">ST Recruitment Warning Signs</div>
+            <span class="pill" id="sumF2Pill">Loading…</span>
+          </div>
+        </div>
+
+        <div id="summaryBlurb" style="font-size:14px;"></div>
+        <div class="summary-note">Use clinical judgement and local safety procedures. Scores support—do not replace—professional decision-making.</div>
+      </div>
+      <!-- ===== End Summary ===== -->
+
       <div class="stack">
         <!-- Factor 1 -->
         <div class="card">
@@ -57,7 +93,7 @@
           </div>
           <div class="riskline" id="f1RiskLine"><span class="pill" id="f1Pill">Loading…</span></div>
 
-          <div class="chart-wrap" aria-label="Exploitation: youth result vs cutoff">
+          <div class="chart-wrap" aria-label="Exploitation visual indicator">
             <div class="chart-box"><div id="f1Chart"></div></div>
           </div>
 
@@ -80,7 +116,7 @@
           </div>
           <div class="riskline" id="f2RiskLine"><span class="pill" id="f2Pill">Loading…</span></div>
 
-          <div class="chart-wrap" aria-label="Recruitment: youth result vs cutoff">
+          <div class="chart-wrap" aria-label="Recruitment visual indicator">
             <div class="chart-box"><div id="f2Chart"></div></div>
           </div>
 
@@ -111,11 +147,15 @@
     const F1_IDS = ['yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn','yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf','yst8b_trnsprtt','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8h_id','yst8_rprts_sx','yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'];
     const F2_IDS = ['yst1f_fnncll__','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh','yst6c_fearful','yst6d_self_hrm','yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t','yst8g_housing','yst6f_chngd_pp'];
 
-    const CUTOFFS = { f1: 9, f2: 10 };
-    const REVERSED = new Set(['yst1f_fnncll__','yst4_crgrvr_spr','yst4_pr_rltnsh','yst1h_jstc_sys']);
+    // Thresholds (internally used; not displayed)
+    const THRESH = {
+      f1: { moderateMin: 9, moderateMax: 14, highMin: 15 }, // Exploitation: Low <9, Mod 9–14, High 15+
+      f2: { highMin: 10 }                                   // Recruitment: Low <10, High >=10 (no moderate yet)
+    };
 
-    // Treat value "1" as No-Info by default; set YST_TREAT_ONE_AS_NI='0' to disable.
+    const REVERSED = new Set(['yst1f_fnncll__','yst4_crgrvr_spr','yst4_pr_rltnsh','yst1h_jstc_sys']);
     const TREAT_ONE_AS_NI = localStorage.getItem('YST_TREAT_ONE_AS_NI') !== '0';
+    const niRegex = /^(ni|no[\s_]?info|no[-\s]?information|unsure|unknown)$/i;
 
     const LABELS = {
       yst5b_sxl_prtn:"Multiple sexual partners in the last year (4+).",
@@ -152,23 +192,19 @@
       yst6f_chngd_pp:"Significant/sudden change in appearance."
     };
 
-    // ---------- Helpers ----------
-    const niRegex = /^(ni|no[\s_]?info|no[-\s]?information|unsure|unknown)$/i;
-
+    // Helpers
     function getStored(id){
       const raw = localStorage.getItem(id);
       if (raw === null) return null;
       const num = parseInt(raw, 10);
       return isNaN(num) ? raw : num;
     }
-
     function sum(ids){
       return ids.reduce((acc,id)=>{
         const v = parseInt(localStorage.getItem(id) || '0', 10);
         return acc + (isNaN(v) ? 0 : v);
       },0);
     }
-
     function buildDisplayList(ids){
       const out = [];
       ids.forEach(id=>{
@@ -182,7 +218,6 @@
       });
       return out;
     }
-
     function isNoInfo(id){
       const flag = localStorage.getItem(id + '_ni') === '1' || localStorage.getItem('ni_' + id) === '1';
       const val = getStored(id);
@@ -191,37 +226,99 @@
       if (typeof val === 'number') return TREAT_ONE_AS_NI && val === 1;
       return niRegex.test(String(val));
     }
-
-    function buildNoInfoList(ids){
-      return ids.filter(id => isNoInfo(id));
-    }
-
+    function buildNoInfoList(ids){ return ids.filter(id => isNoInfo(id)); }
     function tag(raw){ return raw === 3 ? "Yes" : raw === 2 ? "Maybe" : "No"; }
 
-    function setRiskLine(containerId, pillId, isHigh){
+    // Risk level calculators (visual-only; no numbers shown)
+    function levelF1(score){
+      if (score >= THRESH.f1.highMin) return 'High';
+      if (score >= THRESH.f1.moderateMin && score <= THRESH.f1.moderateMax) return 'Moderate';
+      return 'Low';
+    }
+    function levelF2(score){ return score >= THRESH.f2.highMin ? 'High' : 'Low'; }
+
+    // Line + pill
+    function setRiskLine(containerId, pillId, level, label){
       const line = document.getElementById(containerId);
       const pill = document.getElementById(pillId);
-      pill.className = 'pill ' + (isHigh ? 'high' : 'ok');
-      pill.textContent = isHigh ? 'High risk' : 'Not high risk';
+
+      pill.className = 'pill ' + (level==='High' ? 'high' : level==='Moderate' ? 'mod' : 'ok');
+      pill.textContent = level + ' risk';
 
       const oldMsg = line.querySelector('.risk-msg'); if (oldMsg) oldMsg.remove();
       const oldIcon = line.querySelector('.hazard, .okicon'); if (oldIcon) oldIcon.remove();
 
       const iconWrap = document.createElement('span');
-      iconWrap.className = isHigh ? 'hazard' : 'okicon';
-      iconWrap.innerHTML = isHigh
-        ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
-        : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      iconWrap.className = (level==='High') ? 'hazard' : 'okicon';
+      iconWrap.innerHTML = (level==='High')
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
       const msg = document.createElement('span');
       msg.className = 'risk-msg';
-      msg.textContent = isHigh
-        ? 'Scores indicate Youth is High Risk for sex trafficking recruitment'
-        : 'scores indicate no current risk for sex trafficking recruitment';
+      msg.textContent = (level==='High')
+        ? `Indicators suggest high risk related to ${label}.`
+        : (level==='Moderate')
+          ? `Indicators suggest moderate concern related to ${label}.`
+          : `Indicators do not suggest high risk related to ${label}.`;
 
-      line.insertBefore(iconWrap, line.children[1]);
+      line.insertBefore(iconWrap, line.firstChild);
       line.appendChild(msg);
     }
+
+    // ===== Horizontal bars without numbers =====
+    // F1: moderate band + high cut-off line; value shown as fill length, no ticks/numbers.
+    function drawHorizontalBarF1(containerId, value, max){
+      const w = 520, h = 64, pad = 14;
+      const usableW = w - pad*2;
+      const clamp = n => Math.max(0, Math.min(n, max));
+      const valW = (clamp(value)/max)*usableW;
+
+      const modStart = THRESH.f1.moderateMin, modEnd = THRESH.f1.moderateMax, highStart = THRESH.f1.highMin;
+      const modX = pad + (modStart/max)*usableW;
+      const modW = ((modEnd - modStart)/max)*usableW;
+      const highX = pad + (highStart/max)*usableW;
+
+      const svg = `
+        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Visual bar with moderate band and cut-off">
+          <rect x="${pad}" y="${h/2 - 10}" width="${usableW}" height="20" rx="10" fill="#f3f4f6" stroke="#e5e7eb"/>
+          <rect x="${modX}" y="${h/2 - 10}" width="${modW}" height="20" rx="8" fill="#fde68a" opacity="0.6"/>
+          <rect x="${pad}" y="${h/2 - 10}" width="${valW}" height="20" rx="10" fill="var(--york-red)"/>
+          <line x1="${highX}" y1="${h/2 - 14}" x2="${highX}" y2="${h/2 + 14}" stroke="#111" stroke-width="2"/>
+          <text x="${highX}" y="${h/2 - 18}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
+        </svg>`;
+      document.getElementById(containerId).innerHTML = svg;
+    }
+
+    // F2: only high cut-off line (no moderate band yet).
+    function drawHorizontalBarF2(containerId, value, max){
+      const w = 520, h = 64, pad = 14;
+      const usableW = w - pad*2;
+      const clamp = n => Math.max(0, Math.min(n, max));
+      const valW = (clamp(value)/max)*usableW;
+
+      const cutX = pad + (THRESH.f2.highMin/max)*usableW;
+
+      const svg = `
+        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Visual bar with cut-off">
+          <rect x="${pad}" y="${h/2 - 10}" width="${usableW}" height="20" rx="10" fill="#f3f4f6" stroke="#e5e7eb"/>
+          <rect x="${pad}" y="${h/2 - 10}" width="${valW}" height="20" rx="10" fill="var(--york-red)"/>
+          <line x1="${cutX}" y1="${h/2 - 14}" x2="${cutX}" y2="${h/2 + 14}" stroke="#111" stroke-width="2"/>
+          <text x="${cutX}" y="${h/2 - 18}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
+        </svg>`;
+      document.getElementById(containerId).innerHTML = svg;
+    }
+
+    // ===== Summary blurb placeholders (no numbers) =====
+    const BLURBS = {
+      'F1:High|F2:High':      'Both exploitation and recruitment indicators are elevated. Prioritize immediate safety planning and consult agency protocols.',
+      'F1:High|F2:Low':       'Exploitation indicators are elevated while recruitment indicators are not. Review current safety and supports; explore recent changes or concealed contexts.',
+      'F1:Moderate|F2:High':  'Recruitment indicators are elevated alongside a moderate pattern for exploitation. Focus on prevention and rapid monitoring.',
+      'F1:Moderate|F2:Low':   'A moderate pattern is present for exploitation, with low recruitment indicators. Continue routine monitoring and engage protective supports.',
+      'F1:Low|F2:High':       'Recruitment indicators are elevated while exploitation indicators are low. Emphasize engagement, education, and proactive safety steps.',
+      'F1:Low|F2:Low':        'Current indicators do not suggest elevated risk across factors. Maintain regular contact and re-screen if circumstances change.'
+    };
+    function summaryBlurb(l1,l2){ return BLURBS[`F1:${l1}|F2:${l2}`] || ''; }
 
     function fillList(ids, ulId){
       const ul = document.getElementById(ulId);
@@ -234,7 +331,6 @@
         ul.appendChild(li);
       });
     }
-
     function fillNoInfo(ids, ulId){
       const ul = document.getElementById(ulId);
       ul.innerHTML = '';
@@ -247,44 +343,37 @@
       });
     }
 
-    // SVG with per-bar labels directly beneath each bar
-    function drawMiniChartSVG(containerId, value, cutoff, max){
-      const boxW = 220, boxH = 220, pad = 14;
-      const usableH = boxH - pad*2 - 18; // leave room for labels
-      const barW = 52, gap = 30;
-
-      const clamp = (n)=>Math.max(0, Math.min(n, max));
-      const vH = (clamp(value)/max) * usableH;
-      const cH = (clamp(cutoff)/max) * usableH;
-
-      const baseY = boxH - pad - 18; // baseline above labels
-      const youthX  = pad + 8 + barW + gap; // right bar
-      const cutoffX = pad + 8;               // left bar
-
-      const svg = `
-        <svg width="${boxW}" height="${boxH}" viewBox="0 0 ${boxW} ${boxH}" role="img" aria-label="Bar chart">
-          <line x1="${pad}" y1="${baseY}" x2="${boxW-pad}" y2="${baseY}" stroke="#e5e7eb"/>
-          <rect x="${cutoffX}" y="${baseY - cH}" width="${barW}" height="${cH}" rx="10" fill="var(--neutral)"/>
-          <rect x="${youthX}"  y="${baseY - vH}" width="${barW}" height="${vH}" rx="10" fill="var(--york-red)"/>
-          <text x="${cutoffX + barW/2}" y="${boxH - pad}" text-anchor="middle" font-size="12" fill="#374151">Cutoff</text>
-          <text x="${youthX + barW/2}"  y="${boxH - pad}" text-anchor="middle" font-size="12" fill="#374151">Youth result</text>
-        </svg>`;
-      document.getElementById(containerId).innerHTML = svg;
-    }
-
     function render(){
       const f1 = sum(F1_IDS), f2 = sum(F2_IDS);
       const f1Max = F1_IDS.length*3, f2Max = F2_IDS.length*3;
 
-      document.getElementById('f1Nums').textContent = `Internal totals calculated. Youth: ${f1}/${f1Max}. Cutoff: ${CUTOFFS.f1}.`;
-      document.getElementById('f2Nums').textContent = `Internal totals calculated. Youth: ${f2}/${f2Max}. Cutoff: ${CUTOFFS.f2}.`;
+      const L1 = levelF1(f1);
+      const L2 = levelF2(f2);
 
-      setRiskLine('f1RiskLine','f1Pill', f1 >= CUTOFFS.f1);
-      setRiskLine('f2RiskLine','f2Pill', f2 >= CUTOFFS.f2);
+      // Summary pills (no numbers)
+      const sumF1Pill = document.getElementById('sumF1Pill');
+      sumF1Pill.className = 'pill ' + (L1==='High' ? 'high' : L1==='Moderate' ? 'mod' : 'ok');
+      sumF1Pill.textContent = L1 + ' risk';
 
-      drawMiniChartSVG('f1Chart', f1, CUTOFFS.f1, f1Max);
-      drawMiniChartSVG('f2Chart', f2, CUTOFFS.f2, f2Max);
+      const sumF2Pill = document.getElementById('sumF2Pill');
+      sumF2Pill.className = 'pill ' + (L2==='High' ? 'high' : 'ok');
+      sumF2Pill.textContent = L2 + ' risk';
 
+      document.getElementById('summaryBlurb').textContent = summaryBlurb(L1, L2);
+
+      // SR-only text avoids numbers per your request
+      document.getElementById('f1Nums').textContent = `Exploitation indicator bar with moderate band and high cut-off.`;
+      document.getElementById('f2Nums').textContent = `Recruitment indicator bar with high cut-off.`;
+
+      // Risk lines
+      setRiskLine('f1RiskLine','f1Pill', L1, 'exploitation warning signs');
+      setRiskLine('f2RiskLine','f2Pill', L2, 'recruitment warning signs');
+
+      // Charts (horizontal, no numeric labels)
+      drawHorizontalBarF1('f1Chart', f1, f1Max);
+      drawHorizontalBarF2('f2Chart', f2, f2Max);
+
+      // Lists
       fillList(F1_IDS,'f1List'); fillList(F2_IDS,'f2List');
       fillNoInfo(F1_IDS,'f1NoInfo'); fillNoInfo(F2_IDS,'f2NoInfo');
     }
