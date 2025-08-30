@@ -144,38 +144,82 @@
   <script>
     function italicizeParentheticals(s){ return s.replace(/\(([^)]+)\)/g, '<em>($1)</em>'); }
 
+    // --- WORDING per PDF + only #1 is reverse-coded ---
     const BANK = {
+      // #1 (REVERSED): keep reverse true
       yst1f_fnncll__: { id: "yst1f_fnncll__", text: "Youth is financially stable (e.g., has stable housing, caregiver is able to provide, children, pets, family obligations are met, is not being forced to give their money to someone)", reverse: true },
+
       yst1h_jstc_sys: { id: "yst1h_jstc_sys", text: "Youth has past or current involvement with the justice system (e.g., contact with police, involvement with criminal activities)" },
       yst3a_sexul_bs: { id: "yst3a_sexul_bs", text: "Youth has experienced sexual abuse" },
       yst4_crgrvr_spr: { id: "yst4_crgrvr_spr", text: "Parent/caregiver is unable to provide adequate supervision" },
-      yst4_pr_rltnsh: { id: "yst4_pr_rltnsh", text: "Youth has peer relationships that appear unsafe and/or experiences social exclusion (e.g., peers who are not a positive influence, significant age differences, unstable peer group, antisocial peers)" },
+
+      // #5 updated
+      yst4_pr_rltnsh: { id: "yst4_pr_rltnsh", text: "Youth has peer relationships that appear unsafe (e.g., peers who are a negative influence, significantly older peers, unstable peer group) and/or experiences social exclusion." },
+
       yst5b_sxl_prtn: { id: "yst5b_sxl_prtn", text: "Youth has had multiple sexual partners in the last year (4 or more)" },
       yst5c_nn_dscls: { id: "yst5c_nn_dscls", text: "Youth is non-disclosing when it comes to sharing about their romantic partner" },
+
       yst5d_stis: { id: "yst5d_stis", text: "Youth has been treated or tested for having multiple STIs/UTIs (e.g., kidney infections)" },
-      yst5_ldr_prtnr: { id: "yst5_ldr_prtnr", text: "Youth has a romantic partner who is significantly older (≥4 years) (e.g., significant age gap between youth and romantic partner — 4 or more years)" },
+
+      // #9 updated
+      yst5_ldr_prtnr: { id: "yst5_ldr_prtnr", text: "Youth has romantic partners who are significantly older (e.g., significant age gap between youth and romantic partner—4 or more years)." },
+
       yst5f_bsv_prtn: { id: "yst5f_bsv_prtn", text: "Youth has been exposed to an abusive or controlling intimate partner" },
-      yst6c_fearful: { id: "yst6c_fearful", text: "Youth appears on edge, fearful, or hypervigilant" },
+
+      // #11 updated
+      yst6c_fearful: { id: "yst6c_fearful", text: "Youth appears on edge, preoccupied with safety, or hypervigilant." },
+
       yst6d_self_hrm: { id: "yst6d_self_hrm", text: "Youth presents with self-harming behaviour and/or expresses suicidal ideation (i.e., thoughts about dying or ending life)" },
       yst6f_chngd_pp: { id: "yst6f_chngd_pp", text: "Youth presents a significant and sudden change in appearance (e.g., dress, hygiene, weight, tattoos)" },
       yst6g_physcl_t: { id: "yst6g_physcl_t", text: "Youth shows signs of physical trauma (e.g., black eyes, cigarette burns, or broken bones)" },
-      yst7_cnnctns_x: { id: "yst7_cnnctns_x", text: "Youth is connected to people who are exploited, who buy/sell sex, or who are known/suspected traffickers (i.e., trafficked; buyers/sellers; known or suspected traffickers)" },
-      yst7b_gang: { id: "yst7b_gang", text: "Youth has gang affiliation or contact (e.g., tattoos suggestive of branding or gang insignia)" },
-      yst7c_xpsd_dr_: { id: "yst7c_xpsd_dr_", text: "Youth is exposed to drugs/alcohol and/or the drug trade" },
-      yst7d_trffckn_: { id: "yst7d_trffckn_", text: "Youth spends time in locations known as sex trafficking venues (including online) (e.g., physical or online spaces where youth congregate without caregiver supervision)" },
-      yst7e_hides_nf: { id: "yst7e_hides_nf", text: "Youth’s answers (age, whereabouts, relationships) are vague or misleading (e.g., answers to age, whereabouts, residence, or relationships are inconsistent)" },
+
+      // #15 updated
+      yst7_cnnctns_x: { id: "yst7_cnnctns_x", text: "Youth is connected to people who are exploited (i.e., trafficked), who buy or sell sex or who are known/suspected to be sex traffickers." },
+
+      // #16 updated
+      yst7b_gang: { id: "yst7b_gang", text: "Youth has gang affiliation/contact (e.g., tattoos suggestive of branding or gang insignia)." },
+
+      // #17 updated
+      yst7c_xpsd_dr_: { id: "yst7c_xpsd_dr_", text: "Youth is exposed to drugs/alcohol, and/or the buying and selling of drugs." },
+
+      // #18 updated
+      yst7d_trffckn_: { id: "yst7d_trffckn_", text: "Youth spends time in locations that are known as venues for sex trafficking (e.g., physical or online spaces where youth congregate without caregiver supervision)." },
+
+      // #19 updated
+      yst7e_hides_nf: { id: "yst7e_hides_nf", text: "Youth’s answers to questions about their age, whereabouts, residence, or relationships are vague or misleading." },
+
       yst7f_neds_nmt: { id: "yst7f_neds_nmt", text: "Youth describes basic needs as being unmet (e.g., financially and/or emotionally)" },
+
       yst8a_sbstnc_s: { id: "yst8a_sbstnc_s", text: "Youth presents with substance use difficulties (e.g., appears to be under the influence, found with alcohol/drugs)" },
-      yst8b_trnsprtt: { id: "yst8b_trnsprtt", text: "Youth hitch-hikes or travels with unknown individuals (e.g., receives or solicits drives from strangers, has Ubers sent, has a driver)" },
-      yst8c_schl_ttn: { id: "yst8c_schl_ttn", text: "Youth has sporadic school attendance (e.g., skips multiple days, not attending, attends to solicit other youth)" },
-      yst8d_ntrnt_bh: { id: "yst8d_ntrnt_bh", text: "Youth engages in concerning internet behaviour (e.g., posting, sexting, chatting or meeting strangers online possibly for sexual purposes, has been watched/filmed/photographed in a sexually explicit manner)" },
+
+      // #22 updated
+      yst8b_trnsprtt: { id: "yst8b_trnsprtt", text: "Youth hitch-hikes or travels in cars with unknown individuals (e.g., receives or solicits drives from unknown individuals/strangers, has Ubers sent to them, has a driver)." },
+
+      // #23 updated
+      yst8c_schl_ttn: { id: "yst8c_schl_ttn", text: "Youth has sporadic school attendance (e.g., skips multiple days or is not attending, attends to solicit other youth)." },
+
+      // #24 updated
+      yst8d_ntrnt_bh: { id: "yst8d_ntrnt_bh", text: "Youth engages in concerning internet behaviour (e.g., posting, “sexting”, chatting or meeting  with strangers online possibly for sexual purposes, has been watched, filmed, or photographed in a sexually explicit manner)." },
+
       yst8_trffckng: { id: "yst8_trffckng", text: "Youth uses language related to sex trafficking (e.g., “the game”)" },
-      yst8f_awol: { id: "yst8f_awol", text: "Youth runs away or is frequently missing (e.g., gone long periods, frequent short durations, unexplained absences)" },
-      yst8g_housing: { id: "yst8g_housing", text: "Youth lives outside of the family/caregiver home or has unstable housing (e.g., extended stays with friends, periods of homelessness, lives with boy/girlfriend, lives independently, or is housed by someone covering expenses)" },
-      yst8h_id: { id: "yst8h_id", text: "Someone else controls youth’s ID or contact with family/friends (e.g., controlling cell phone and social media use, leaving youth isolated)" },
+
+      // #26 updated
+      yst8f_awol: { id: "yst8f_awol", text: "Youth runs away/is gone and their whereabouts are unknown (e.g., for long periods of time, frequently for short durations, unexplained absence)." },
+
+      // #27 updated
+      yst8g_housing: { id: "yst8g_housing", text: "Youth lives outside of family/caregiver home (e.g., stays overnight at friends for extended time, periods of homelessness, unstable housing, with a boy/girlfriend), lives independently and/or is being housed by someone who is paying for their living expenses." },
+
+      // #28 updated
+      yst8h_id: { id: "yst8h_id", text: "Someone else is controlling the youth’s ID documents and/or contact with family or friends, leaving the youth socially isolated (i.e., controlling cell phone and social media use)." },
+
       yst8_rprts_sx: { id: "yst8_rprts_sx", text: "Youth reports exchanging sex for money or material goods" },
-      yst9_csh_nd_gd: { id: "yst9_csh_nd_gd", text: "Youth has large amounts of unexplained cash or expensive items (e.g., new purses, shoes, tech devices, gift cards, groceries being assisted by strangers)" },
-      yst9b_hotels: { id: "yst9b_hotels", text: "Youth frequents hotels or has hotel key cards" },
+
+      // #30 updated
+      yst9_csh_nd_gd: { id: "yst9_csh_nd_gd", text: "Youth has large amounts of unexplained cash, or expensive items (e.g., new purses, shoes, technical devices, gift cards, groceries being assisted by strangers)." },
+
+      // #31 updated
+      yst9b_hotels: { id: "yst9b_hotels", text: "Youth frequents hotel rooms and/or has hotel key cards in their possession." },
+
       yst9c_cll_phns: { id: "yst9c_cll_phns", text: "Youth has several cell phones" },
     };
 
@@ -190,6 +234,7 @@
 
     const orderedQuestions = orderedIds.map(id => BANK[id]).filter(Boolean);
 
+    // Factor membership (unchanged)
     const factor1Set = new Set([
       'yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn',
       'yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf',
@@ -203,6 +248,7 @@
       'yst8g_housing','yst6f_chngd_pp'
     ]);
 
+    // Response scale (store 0/2/3; 1 = “No Info”)
     const options = [
       { label: "No Info", value: 1 },
       { label: "No", value: 0 },
@@ -252,6 +298,16 @@
       document.getElementById('barFillMobile').style.width = pct + '%';
     }
 
+    // Reverse-coding that preserves “No Info” (1) and “Maybe” (2).
+    // Only “No”(0) <-> “Yes”(3) flip when q.reverse === true.
+    function reverseScorePreservingNI(raw){
+      if (raw === 1) return 1;      // No Info stays No Info
+      if (raw === 2) return 2;      // Maybe stays Maybe
+      if (raw === 0) return 3;      // No -> Yes
+      if (raw === 3) return 0;      // Yes -> No
+      return raw;
+    }
+
     function validateAndScore(){
       const allFields = Array.from(document.querySelectorAll('.field'));
       let firstMissing = null, allFilled = true;
@@ -261,21 +317,45 @@
         if(!checked){ field.classList.add('missing'); if(!firstMissing) firstMissing = field; allFilled = false; }
         else { field.classList.remove('missing'); }
       });
-      if(!allFilled){ alert('Please answer all questions before continuing.'); firstMissing.scrollIntoView({behavior:'smooth', block:'center'}); firstMissing.querySelector('input')?.focus({preventScroll:true}); return false; }
+      if(!allFilled){
+        alert('Please answer all questions before continuing.');
+        firstMissing.scrollIntoView({behavior:'smooth', block:'center'});
+        firstMissing.querySelector('input')?.focus({preventScroll:true});
+        return false;
+      }
+
       let f1Score = 0, f2Score = 0;
+
       orderedQuestions.forEach(q => {
         const sel = document.querySelector(`input[name="${q.id}"]:checked`);
         const raw = parseInt(sel.value, 10);
-        const val = q.reverse ? 3 - raw : raw;
-        localStorage.setItem(q.id, val);
+
+        // Apply the only reverse-coded item rule
+        const val = q.reverse ? reverseScorePreservingNI(raw) : raw;
+
+        // Persist value
+        localStorage.setItem(q.id, String(val));
+
+        // Mark/clear No-Info flag for results page compatibility
+        if (raw === 1) { localStorage.setItem(q.id + '_ni', '1'); }
+        else { localStorage.removeItem(q.id + '_ni'); }
+
+        // Tally by factor
         if (factor1Set.has(q.id)) f1Score += val;
         if (factor2Set.has(q.id)) f2Score += val;
       });
-      localStorage.setItem('factor1_score', f1Score); localStorage.setItem('factor2_score', f2Score);
+
+      localStorage.setItem('factor1_score', String(f1Score));
+      localStorage.setItem('factor2_score', String(f2Score));
+
       return true;
     }
 
-    document.getElementById('submitBtn').addEventListener('click', () => { if(validateAndScore()){ window.location.href = 'results.html'; }});
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      if(validateAndScore()){
+        window.location.href = 'results.html';
+      }
+    });
   </script>
 </body>
 </html>
