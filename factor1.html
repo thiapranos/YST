@@ -91,6 +91,15 @@
     .mobile-bar .fill{ height:100%; width:0%; background: var(--york-red); transition: width .2s ease; }
     @media(min-width: 980px){ .mobile-progress{ display:none; } }
   </style>
+<head>
+  <style>
+    .answer-key {
+      border: 2px solid #cc0000; /* subtle but visible red */
+      border-radius: 6px;        /* soften corners */
+      padding: 1rem;             /* spacing inside box */
+      margin-bottom: 1.5rem;     /* space before first question */
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -119,6 +128,7 @@
             <button type="button" class="btn-primary" id="submitBtn">Submit & View Results</button>
           </div>
         </form>
+
 
         <footer>
   <small>
