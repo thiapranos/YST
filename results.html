@@ -51,23 +51,30 @@
     .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden;min-height:84px}
     .chart-box > div{min-height:64px}
 
+    /* Dropdown arrows */
     details{margin-top:10px}
-    summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+    summary{
+      cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center;
+      list-style:none;
+    }
+    summary::before{
+      content:"▸"; display:inline-block; width:1em; margin-right:6px; transition:transform .2s ease;
+    }
+    details[open] summary::before{ transform:rotate(90deg); }
+
     .list{margin:10px 0 0;padding-left:18px}
-    .btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+    .btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center}
     .btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer;min-height:44px}
     .btn.primary{background:var(--york-red);color:#fff;border-color:transparent}
     .btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+    .print-note{font-size:12px;color:var(--muted)}
+
     footer{margin-top:14px;text-align:center;font-size:13px;color:var(--muted)}
 
-    /* Summary card at the top (no numbers) */
-    .summary{display:grid;gap:12px;min-height:160px} /* reserve height to avoid shift */
-    .summary-grid{display:grid;grid-template-columns:1fr;gap:10px}
-    .summary-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .summary-name{font-weight:700}
+    /* Summary card at the top (BLURB ONLY) */
+    .summary{display:grid;gap:12px;min-height:80px} /* smaller since pills removed */
+    #summaryBlurb{min-height:48px;display:flex;align-items:center;font-size:14px}
     .summary-note{font-size:12px;color:var(--muted)}
-    #summaryBlurb{min-height:48px;display:flex;align-items:center}
-    @media (min-width:640px){ .summary-grid{grid-template-columns:1fr 1fr} }
 
     /* Print polish */
     .print-only{display:none}
@@ -97,25 +104,15 @@
         <strong>Heads up:</strong> Results are not stored. If you do not print/save a PDF or record outcomes per your agency procedure, this data will disappear when you leave or refresh this page.
       </div>
 
-      <!-- ===== Summary (no numbers) ===== -->
+      <!-- ===== Summary (BLURB ONLY) ===== -->
       <div class="card summary" id="summaryCard" aria-labelledby="summaryTitle">
         <h2 class="title" id="summaryTitle">Summary</h2>
 
         <!-- Print-only timestamp/meta -->
         <div id="printMeta" class="print-only" style="font-size:12px;color:#333;margin-bottom:6px;"></div>
 
-        <div class="summary-grid">
-          <div class="summary-row">
-            <div class="summary-name">ST Exploitation Warning Signs</div>
-            <span class="pill" id="sumF1Pill">Loading…</span>
-          </div>
-          <div class="summary-row">
-            <div class="summary-name">ST Recruitment Warning Signs</div>
-            <span class="pill" id="sumF2Pill">Loading…</span>
-          </div>
-        </div>
-
-        <div id="summaryBlurb" style="font-size:14px;"></div>
+        <!-- Removed the two factor rows & pills -->
+        <div id="summaryBlurb"></div>
         <div class="summary-note">Use clinical judgement and local safety procedures. Scores support—do not replace—professional decision-making.</div>
       </div>
       <!-- ===== End Summary ===== -->
@@ -134,13 +131,8 @@
           </div>
 
           <details open>
-            <summary>Show risk items</summary>
+            <summary>Confirmed risk items</summary>
             <ul class="list" id="f1List"></ul>
-          </details>
-
-          <details>
-            <summary>Items marked “No Info” (investigate)</summary>
-            <ul class="list" id="f1NoInfo"></ul>
           </details>
         </div>
 
@@ -157,18 +149,22 @@
           </div>
 
           <details open>
-            <summary>Show risk items</summary>
+            <summary>Confirmed risk items</summary>
             <ul class="list" id="f2List"></ul>
           </details>
+        </div>
 
+        <!-- Combined No Info / Maybe section (under second factor) -->
+        <div class="card">
           <details>
-            <summary>Items marked “No Info” (investigate)</summary>
-            <ul class="list" id="f2NoInfo"></ul>
+            <summary>Items marked “No Info” or “Maybe” (investigate)</summary>
+            <ul class="list" id="niCombined"></ul>
           </details>
         </div>
 
         <div class="btns">
           <button class="btn primary" id="printBtn">Print / Save PDF</button>
+          <span class="print-note">Tip: expand dropdowns before printing so all items appear on the PDF.</span>
         </div>
       </div>
     </section>
@@ -250,14 +246,12 @@
       },0);
     }
 
-    // Build display list with stored values as-is (no reverse flipping)
-    function buildDisplayList(ids){
+    // Confirmed-risk list: only YES (raw === 3)
+    function buildConfirmedList(ids){
       const out = [];
       ids.forEach(id=>{
         const stored = parseInt(localStorage.getItem(id) || '0', 10);
-        if (isNaN(stored)) return;
-        const raw = stored;
-        if (raw >= 2){ out.push({ id, raw }); } // show Maybe / Yes
+        if (!isNaN(stored) && stored === 3){ out.push({ id, raw: 3 }); }
       });
       return out;
     }
@@ -267,10 +261,16 @@
       const val = getStored(id);
       if (flag) return true;
       if (val === null) return false;
-      if (typeof val === 'number') return TREAT_ONE_AS_NI && val === 1;
+      if (typeof val === 'number') return (TREAT_ONE_AS_NI && val === 1) || val === 2; // 1 = No Info, 2 = Maybe
       return niRegex.test(String(val));
     }
-    function buildNoInfoList(ids){ return ids.filter(id => isNoInfo(id)); }
+
+    // Combined No Info/Maybe across both factors
+    function buildCombinedNI(idsA, idsB){
+      const all = [...idsA, ...idsB];
+      return all.filter(id => isNoInfo(id));
+    }
+
     function tag(raw){ return raw === 3 ? "Yes" : raw === 2 ? "Maybe" : "No"; }
 
     // Risk level calculators (visual-only; no numbers shown)
@@ -363,10 +363,10 @@
     function summaryBlurb(l1,l2){ return BLURBS[`F1:${l1}|F2:${l2}`] || ''; }
 
     // ---------- Render ----------
-    function fillList(ids, ulId){
+    function fillConfirmed(ids, ulId){
       const ul = document.getElementById(ulId);
       ul.innerHTML = '';
-      const items = buildDisplayList(ids);
+      const items = buildConfirmedList(ids);
       if (!items.length){ ul.innerHTML = '<li>No items to display.</li>'; return; }
       items.forEach(({id, raw})=>{
         const li = document.createElement('li');
@@ -374,11 +374,12 @@
         ul.appendChild(li);
       });
     }
-    function fillNoInfo(ids, ulId){
+
+    function fillCombinedNI(ulId){
       const ul = document.getElementById(ulId);
       ul.innerHTML = '';
-      const items = buildNoInfoList(ids);
-      if (!items.length){ ul.innerHTML = '<li>No “No Info” items.</li>'; return; }
+      const items = buildCombinedNI(F1_IDS, F2_IDS);
+      if (!items.length){ ul.innerHTML = '<li>No “No Info” or “Maybe” items.</li>'; return; }
       items.forEach(id=>{
         const li = document.createElement('li');
         li.textContent = LABELS[id] || id;
@@ -398,15 +399,7 @@
       const L1 = levelF1(f1);
       const L2 = levelF2(f2);
 
-      // Summary pills (no numbers)
-      const sumF1Pill = document.getElementById('sumF1Pill');
-      sumF1Pill.className = 'pill ' + (L1==='High' ? 'high' : L1==='Moderate' ? 'mod' : 'ok');
-      sumF1Pill.textContent = L1 + ' risk';
-
-      const sumF2Pill = document.getElementById('sumF2Pill');
-      sumF2Pill.className = 'pill ' + (L2==='High' ? 'high' : 'ok');
-      sumF2Pill.textContent = L2 + ' risk';
-
+      // Summary BLURB ONLY
       document.getElementById('summaryBlurb').textContent = summaryBlurb(L1, L2);
 
       // SR-only descriptions (no numeric values)
@@ -421,9 +414,12 @@
       drawHorizontalBarF1('f1Chart', f1, f1Max);
       drawHorizontalBarF2('f2Chart', f2, f2Max);
 
-      // Lists
-      fillList(F1_IDS,'f1List'); fillList(F2_IDS,'f2List');
-      fillNoInfo(F1_IDS,'f1NoInfo'); fillNoInfo(F2_IDS,'f2NoInfo');
+      // Lists: Confirmed (Yes only)
+      fillConfirmed(F1_IDS,'f1List');
+      fillConfirmed(F2_IDS,'f2List');
+
+      // Combined NI/Maybe
+      fillCombinedNI('niCombined');
     }
 
     function clearKeys(){
@@ -444,4 +440,5 @@
   </script>
 </body>
 </html>
+
 
