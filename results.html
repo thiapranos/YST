@@ -59,6 +59,14 @@
     /* Notice */
     .ephemeral{border:1px dashed var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:#7a1b25;background:#fff6f7;margin:10px 0 14px 0}
 
+    /* Summary card gets a red outline + light tint */
+    .card.summary {
+      border: 2px solid var(--york-red);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff6f7;
+    }
+
     /* Spectrum */
     .chart-wrap{margin-top:12px}
     .chart-box{border:1px solid var(--border);border-radius:12px;padding:12px;overflow:visible}
@@ -67,7 +75,7 @@
       width:100%;
       height:32px;
       border-radius:999px;
-      overflow:visible;              /* <- prevents pointer clipping */
+      overflow:visible;
       display:grid;
       grid-template-columns:repeat(4,1fr);
       border:1px solid #e5e7eb;
@@ -78,7 +86,6 @@
           var(--risk-elev) 50% 75%,
           var(--risk-very) 75% 100%);
     }
-    /* Subtle inside border to give the bar definition */
     .gauge::after{
       content:""; position:absolute; inset:0;
       border-radius:999px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.07);
@@ -88,7 +95,7 @@
     /* Pointer (downward triangle) */
     .pointer{
       position:absolute;
-      bottom:-6px;                   /* <- gives the tip breathing room */
+      bottom:-6px;                   /* move up/down as desired */
       transform:translateX(-50%);
       width:0; height:0;
       border-left:9px solid transparent;
@@ -97,7 +104,7 @@
       filter:drop-shadow(0 1px 0 rgba(0,0,0,.12));
     }
 
-    /* Band labels under the bar */
+    /* Band labels */
     .band-labels{
       display:grid;
       grid-template-columns:repeat(4,1fr);
@@ -109,7 +116,7 @@
     .band-labels .active.elev{ color:var(--risk-elev-text) }
     .band-labels .active.very{ color:#9f1239 }
 
-    /* Dropdown arrows */
+    /* Details */
     details{margin-top:10px}
     summary{
       cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center;
@@ -169,17 +176,19 @@
         <strong>Results are not saved.</strong> Print/save a PDF or record outcomes per agency procedure before leaving or refreshing. Use the button at the bottom of the page.
       </div>
 
-    <!-- Summary -->
-<div class="card summary" id="summaryCard" aria-labelledby="summaryTitle">
-  <div class="summary-head">
-    <h2 class="title" id="summaryTitle" style="margin:0;">Summary</h2>
-    <!-- <a class="more-info" href="/docs/yst-interpretation.pdf" target="_blank" rel="noopener">More info</a> -->
-  </div>
+      <!-- Summary -->
+      <div class="card summary" id="summaryCard" aria-labelledby="summaryTitle">
+        <div class="summary-head">
+          <h2 class="title" id="summaryTitle" style="margin:0;">Summary</h2>
+          <!-- <a class="more-info" href="/docs/yst-interpretation.pdf" target="_blank" rel="noopener">More info</a> -->
+        </div>
 
         <div id="printMeta" class="print-only" style="font-size:12px;color:#333;margin-bottom:6px;"></div>
 
         <div id="summaryBlurb"></div>
-        <div class="summary-note">Use clinical judgement and local safety procedures. Scores support—not replace—professional decision-making.</div>
+        <div class="summary-note">
+          Use clinical judgement and local safety procedures. Scores support—not replace—professional decision-making.
+        </div>
       </div>
 
       <div class="stack">
@@ -272,14 +281,14 @@
     // Cut-offs
     const CUTS = {
       f1: { lowMax: 4, slightMin: 5, elevMin: 11, veryMin: 17, max: F1_IDS.length*3 },
-      f2: { lowMax: 6, slightMin: 7, elevMin: 13, veryMin: 20, max: F2_IDS.length*3 }
+      f2: { lowMax: 6, slightMin: 7, elevMin: 13, veryMin: 20, max: F2_IDS.length*3 } // set elevMin:14 if Slightly=7–13
     };
 
     // Treat "1" as No Info by default
     const TREAT_ONE_AS_NI = localStorage.getItem('YST_TREAT_ONE_AS_NI') !== '0';
     const niRegex = /^(ni|no[\s_]?info|no[-\s]?information|unsure|unknown)$/i;
 
-    // Labels
+    // Labels (unchanged) ...
     const LABELS = {
       yst5b_sxl_prtn:"Youth has had multiple sexual partners in the last year (4 or more)",
       yst5c_nn_dscls:"Youth is non-disclosing when it comes to sharing about their romantic partner",
@@ -366,7 +375,7 @@
       return 'Low Risk';
     }
 
-    // Map band -> [min,max] numeric range for proportional pointer
+    // Map band -> [min,max]
     function bandRange(cuts, band){
       if (band==='Low Risk')               return [0, cuts.lowMax];
       if (band==='Slightly Elevated Risk') return [cuts.slightMin, cuts.elevMin - 1];
@@ -374,7 +383,7 @@
       return [cuts.veryMin, cuts.max]; // Very Elevated
     }
 
-    // Risk pill (with icons)
+    // Risk pill
     function setRiskRow({pillId, blurbId, band, factor}){
       const pill = document.getElementById(pillId);
       const txt = pill.querySelector('.txt');
@@ -406,7 +415,7 @@
         `Ratings on this scale indicate that the youth has fewer or comparable ${domain} warning signs to other youth involved with child welfare.`;
     }
 
-    // Fixed 4-segment gauge with pointer positioned *within* the selected band
+    // Set gauge pointer within active band
     function setGaugeWithinBand({gaugeId, pointerId, labelsId, band, score, cuts}){
       const ptr = document.getElementById(pointerId);
       const labels = document.getElementById(labelsId).querySelectorAll('span');
@@ -414,28 +423,25 @@
                   (band==='Elevated Risk') ? 2 :
                   (band==='Slightly Elevated Risk') ? 1 : 0;
 
-      // Percent slice for each band
       const sliceStart = idx * 25;   // 0,25,50,75
-      const inset = 3;               // % inset to avoid hugging rounded ends
+      const inset = 3;
       const usable = 25 - inset*2;
 
-      // Compute relative position inside band from numeric score
       const [bMin, bMax] = bandRange(cuts, band);
-      const denom = Math.max(1, (bMax - bMin));          // avoid 0
-      let rel = (score - bMin) / denom;                  // 0..1 (roughly)
-      rel = Math.max(0, Math.min(1, rel));               // clamp
+      const denom = Math.max(1, (bMax - bMin));
+      let rel = (score - bMin) / denom;
+      rel = Math.max(0, Math.min(1, rel));
 
       const xPct = sliceStart + inset + rel * usable;
       ptr.style.left = xPct + '%';
 
-      // Active label coloring
       labels.forEach((el,i)=>{
         el.classList.remove('active','low','slight','elev','very');
         if (i===idx){ el.classList.add('active', ['low','slight','elev','very'][i]); }
       });
     }
 
-    // ---------- Verbatim summary blurbs ----------
+    // Summaries
     const VERBATIM = {
       expoVE: "This youth is presenting with a significant number of exploitation warning signs placing them at a very elevated risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
       expoE:  "This youth is presenting with a significant number of exploitation warning signs placing them at an  elevated risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
@@ -498,7 +504,7 @@
       setRiskRow({pillId:'f1Pill', blurbId:'f1Blurb', band:B1, factor:'f1'});
       setRiskRow({pillId:'f2Pill', blurbId:'f2Blurb', band:B2, factor:'f2'});
 
-      // Gauges (pointer proportional *within* selected band)
+      // Gauges (pointer proportional within selected band)
       setGaugeWithinBand({gaugeId:'f1Gauge', pointerId:'f1Ptr', labelsId:'f1Labels', band:B1, score:f1, cuts:CUTS.f1});
       setGaugeWithinBand({gaugeId:'f2Gauge', pointerId:'f2Ptr', labelsId:'f2Labels', band:B2, score:f2, cuts:CUTS.f2});
 
