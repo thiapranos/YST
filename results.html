@@ -58,7 +58,12 @@
       list-style:none;
     }
     summary::before{
-      content:"▸"; display:inline-block; width:1em; margin-right:6px; transition:transform .2s ease;
+      content:"▸"; display:inline-block;  font-size:22px;       /* bigger arrow */
+  font-weight:700;      /* makes arrow thicker */
+  color:#333;           /* darker for clarity */
+  width:1.2em;          /* slightly wider spacing */
+  margin-right:8px;     /* more space from text */ 
+  width:1em; margin-right:6px; transition:transform .2s ease;
     }
     details[open] summary::before{ transform:rotate(90deg); }
 
