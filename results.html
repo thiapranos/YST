@@ -13,8 +13,7 @@
   <style>
     :root{
       --york-red:#E31837; --york-red-dark:#AF0D1A;
-      --ink:#111; --muted:#6b7280; --bg:#FAFAFA; --card:#fff; --border:#E8E6E4; --focus:#3AC2EF; --neutral:#9ca3af;
-      --soft:#fff5f6; --soft-border:#ffd9de;
+      --ink:#111; --muted:#6b7280; --bg:#FAFAFA; --card:#fff; --border:#E8E6E4; --focus:#3AC2EF;
 
       /* Risk colors */
       --risk-low:#10b981;          /* green */
@@ -22,15 +21,9 @@
       --risk-elev:#fb923c;         /* orange */
       --risk-very:#E31837;         /* red */
 
-      /* Halo tints */
-      --halo-low:#dcfce7;
-      --halo-slight:#fef9c3;
-      --halo-elev:#ffedd5;
-      --halo-very:#ffe4e6;
-
-      /* Text colors for contrast on yellow/orange labels */
-      --risk-slight-text:#a16207;
-      --risk-elev-text:#c2410c;
+      /* Text colors for yellow/orange labels */
+      --risk-slight-text:#7a6000;
+      --risk-elev-text:#8a3a05;
     }
     *{box-sizing:border-box}
     body{
@@ -40,7 +33,7 @@
     }
     .wrap{width:100%;max-width:860px}
     .hero{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 10px 24px rgba(17,17,17,.06)}
-    .badge{display:inline-flex;align-items:center;gap:8px;background:var(--soft);color:var(--york-red);border:1px solid var(--soft-border);border-radius:999px;padding:6px 12px;font-weight:700;font-size:12px;letter-spacing:.02em;margin-bottom:10px}
+    .badge{display:inline-flex;align-items:center;gap:8px;background:#fff6f7;color:var(--york-red);border:1px solid #ffd9de;border-radius:999px;padding:6px 12px;font-weight:700;font-size:12px;letter-spacing:.02em;margin-bottom:10px}
     h1{margin:0 0 4px 0;font-size:clamp(24px,3.6vw,34px);letter-spacing:-.01em}
 
     .stack{display:grid;gap:16px;margin-top:18px}
@@ -68,24 +61,53 @@
 
     /* Spectrum */
     .chart-wrap{margin-top:12px}
-    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden;min-height:112px}
-    .chart-box > div{min-height:72px} /* svg bar only; labels are HTML below */
+    .chart-box{border:1px solid var(--border);border-radius:12px;padding:12px;overflow:visible}
+    .gauge{
+      position:relative;
+      width:100%;
+      height:32px;
+      border-radius:999px;
+      overflow:visible;              /* <- prevents pointer clipping */
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      border:1px solid #e5e7eb;
+      background:
+        linear-gradient(90deg,
+          var(--risk-low) 0 25%,
+          var(--risk-slight) 25% 50%,
+          var(--risk-elev) 50% 75%,
+          var(--risk-very) 75% 100%);
+    }
+    /* Subtle inside border to give the bar definition */
+    .gauge::after{
+      content:""; position:absolute; inset:0;
+      border-radius:999px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.07);
+      pointer-events:none;
+    }
+
+    /* Pointer (downward triangle) */
+    .pointer{
+      position:absolute;
+      bottom:-6px;                   /* <- gives the tip breathing room */
+      transform:translateX(-50%);
+      width:0; height:0;
+      border-left:9px solid transparent;
+      border-right:9px solid transparent;
+      border-top:12px solid var(--york-red-dark);
+      filter:drop-shadow(0 1px 0 rgba(0,0,0,.12));
+    }
 
     /* Band labels under the bar */
     .band-labels{
       display:grid;
       grid-template-columns:repeat(4,1fr);
-      gap:6px;
-      margin-top:8px;
-      font-size:12px;
-      font-weight:600;
-      color:#6b7280;   /* default muted */
+      gap:6px;margin-top:8px;font-size:12px;font-weight:700;color:#6b7280;
     }
     .band-labels span{ text-align:center }
-    .band-labels .active.low{ color:var(--risk-low) }
+    .band-labels .active.low{ color:#065f46 }
     .band-labels .active.slight{ color:var(--risk-slight-text) }
     .band-labels .active.elev{ color:var(--risk-elev-text) }
-    .band-labels .active.very{ color:var(--york-red) }
+    .band-labels .active.very{ color:#9f1239 }
 
     /* Dropdown arrows */
     details{margin-top:10px}
@@ -108,14 +130,11 @@
     .btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
     .print-note{font-size:12px;color:var(--muted)}
 
-    /* "More info" placeholder link */
-    .more-info{
-      margin-left:auto; font-size:13px; font-weight:700; color:var(--york-red); text-decoration:none;
-    }
+    .more-info{ margin-left:auto; font-size:13px; font-weight:700; color:var(--york-red); text-decoration:none; }
     .more-info:hover{ text-decoration:underline; }
     .more-info:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
 
-    footer{margin-top:14px;text-align:center;font-size:13px;color:var(--muted)}
+    footer{margin-top:14px;text-align:center;font-size:13px;color:#6b7280}
 
     /* Summary (blurb only) */
     .summary{display:grid;gap:12px;min-height:80px}
@@ -131,8 +150,8 @@
       .btns, .badge{ display:none !important }
       .hero{ box-shadow:none; border:0; padding:0 }
       .print-only{ display:block !important }
-      .chart-box{ border:1px solid #000 }
-      .cut-label, .score-label{ fill:#000 !important }
+      .gauge{ border:1px solid #000 }
+      .band-labels span{ color:#000 !important }
       .ephemeral{ border-color:#000; background:#fff; color:#000 }
     }
   </style>
@@ -177,7 +196,14 @@
           </div>
 
           <div class="chart-wrap" aria-label="Exploitation spectrum indicator">
-            <div class="chart-box"><div id="f1Chart"></div></div>
+            <div class="chart-box">
+              <div class="gauge" id="f1Gauge">
+                <div class="pointer" id="f1Ptr" aria-hidden="true"></div>
+              </div>
+              <div class="band-labels" id="f1Labels" role="group" aria-label="Risk bands">
+                <span>Low</span><span>Slightly Elevated</span><span>Elevated</span><span>Very Elevated</span>
+              </div>
+            </div>
           </div>
 
           <details open>
@@ -199,7 +225,14 @@
           </div>
 
           <div class="chart-wrap" aria-label="Recruitment spectrum indicator">
-            <div class="chart-box"><div id="f2Chart"></div></div>
+            <div class="chart-box">
+              <div class="gauge" id="f2Gauge">
+                <div class="pointer" id="f2Ptr" aria-hidden="true"></div>
+              </div>
+              <div class="band-labels" id="f2Labels" role="group" aria-label="Risk bands">
+                <span>Low</span><span>Slightly Elevated</span><span>Elevated</span><span>Very Elevated</span>
+              </div>
+            </div>
           </div>
 
           <details open>
@@ -236,9 +269,7 @@
     const F1_IDS = ['yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn','yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf','yst8b_trnsprtt','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8h_id','yst8_rprts_sx','yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'];
     const F2_IDS = ['yst1f_fnncll__','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh','yst6c_fearful','yst6d_self_hrm','yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t','yst8g_housing','yst6f_chngd_pp'];
 
-    // ---------- NEW cut-offs (percentile bands) ----------
-    // Exploitation: <5 Low, 5–10 Slightly Elevated, 11–16 Elevated, ≥17 Very Elevated
-    // Recruitment:  <7 Low, 7–10 Slightly Elevated, 13–19 Elevated, ≥20 Very Elevated
+    // Cut-offs
     const CUTS = {
       f1: { lowMax: 4, slightMin: 5, elevMin: 11, veryMin: 17, max: F1_IDS.length*3 },
       f2: { lowMax: 6, slightMin: 7, elevMin: 13, veryMin: 20, max: F2_IDS.length*3 }
@@ -248,7 +279,7 @@
     const TREAT_ONE_AS_NI = localStorage.getItem('YST_TREAT_ONE_AS_NI') !== '0';
     const niRegex = /^(ni|no[\s_]?info|no[-\s]?information|unsure|unknown)$/i;
 
-    // Labels (unchanged)
+    // Labels
     const LABELS = {
       yst5b_sxl_prtn:"Youth has had multiple sexual partners in the last year (4 or more)",
       yst5c_nn_dscls:"Youth is non-disclosing when it comes to sharing about their romantic partner",
@@ -335,14 +366,12 @@
       return 'Low Risk';
     }
 
-    // Blurb beside each pill
-    function factorBlurb(factor, band){
-      const isExpo = factor === 'f1';
-      const domain = isExpo ? 'exploitation' : 'recruitment';
-      if (band === 'Very Elevated Risk') return `Ratings on this scale indicate that the youth presents with more ${domain} warning signs than 90% of other youth involved with child welfare.`;
-      if (band === 'Elevated Risk')      return `Ratings on this scale indicate that the youth presents with more ${domain} warning signs than 75% of other youth involved with child welfare.`;
-      if (band === 'Slightly Elevated Risk') return `Ratings on this scale indicate that the youth presents with more ${domain} warning signs than 50% of other youth involved with child welfare.`;
-      return `Ratings on this scale indicate that the youth has fewer or comparable ${domain} warning signs to other youth involved with child welfare.`;
+    // Map band -> [min,max] numeric range for proportional pointer
+    function bandRange(cuts, band){
+      if (band==='Low Risk')               return [0, cuts.lowMax];
+      if (band==='Slightly Elevated Risk') return [cuts.slightMin, cuts.elevMin - 1];
+      if (band==='Elevated Risk')          return [cuts.elevMin, cuts.veryMin - 1];
+      return [cuts.veryMin, cuts.max]; // Very Elevated
     }
 
     // Risk pill (with icons)
@@ -365,66 +394,48 @@
       } else if (band==='Slightly Elevated Risk'){
         svg = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fff"/><line x1="12" y1="7" x2="12" y2="13" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="17" r="1.8" fill="currentColor"/></svg>';
       } else {
-        /* Solid hazard triangle */
-        svg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 22 20H2L12 2z" fill="#fff"></path><rect x="11" y="8" width="2" height="7" fill="currentColor"></rect><rect x="11" y="16.5" width="2" height="2" rx="1" fill="currentColor"></rect></svg>';
+        svg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 22 20H2L12 2z" fill="#fff"></path><rect x="11" y="7" width="2" height="8" rx="1" fill="currentColor"></rect><rect x="11" y="16.5" width="2" height="2" rx="1" fill="currentColor"></rect></svg>';
       }
       ico.innerHTML = svg;
 
-      document.getElementById(blurbId).textContent = factorBlurb(factor, band);
+      const domain = factor === 'f1' ? 'exploitation' : 'recruitment';
+      document.getElementById(blurbId).textContent =
+        band==='Very Elevated Risk' ? `Ratings on this scale indicate that the youth presents with more ${domain} warning signs than 90% of other youth involved with child welfare.` :
+        band==='Elevated Risk'      ? `Ratings on this scale indicate that the youth presents with more ${domain} warning signs than 75% of other youth involved with child welfare.` :
+        band==='Slightly Elevated Risk' ? `Ratings on this scale indicate that the youth presents with more ${domain} warning signs than 50% of other youth involved with child welfare.` :
+        `Ratings on this scale indicate that the youth has fewer or comparable ${domain} warning signs to other youth involved with child welfare.`;
     }
 
-    /* Spectrum bar (SVG) + band labels (HTML) */
-    function drawSpectrumBar({containerId, value, max, cuts, band}){
-      const host = document.getElementById(containerId);
-      const w = 520, h = 72, pad = 14;
-      const usableW = w - pad*2;
-      const clamp = n => Math.max(0, Math.min(n, max));
-      const v = clamp(value);
+    // Fixed 4-segment gauge with pointer positioned *within* the selected band
+    function setGaugeWithinBand({gaugeId, pointerId, labelsId, band, score, cuts}){
+      const ptr = document.getElementById(pointerId);
+      const labels = document.getElementById(labelsId).querySelectorAll('span');
+      const idx = (band==='Very Elevated Risk') ? 3 :
+                  (band==='Elevated Risk') ? 2 :
+                  (band==='Slightly Elevated Risk') ? 1 : 0;
 
-      const xFor = val => pad + (val/max)*usableW;
-      const barY = h/2 - 12, barH = 24;
+      // Percent slice for each band
+      const sliceStart = idx * 25;   // 0,25,50,75
+      const inset = 3;               // % inset to avoid hugging rounded ends
+      const usable = 25 - inset*2;
 
-      // Score halo (fixed width)
-      const HALO_W = 110;
-      let haloX = xFor(v) - HALO_W/2;
-      if (haloX < pad) haloX = pad;
-      if (haloX + HALO_W > w - pad) haloX = w - pad - HALO_W;
+      // Compute relative position inside band from numeric score
+      const [bMin, bMax] = bandRange(cuts, band);
+      const denom = Math.max(1, (bMax - bMin));          // avoid 0
+      let rel = (score - bMin) / denom;                  // 0..1 (roughly)
+      rel = Math.max(0, Math.min(1, rel));               // clamp
 
-      const haloFill =
-        band==='Very Elevated Risk' ? 'var(--halo-very)' :
-        band==='Elevated Risk' ? 'var(--halo-elev)' :
-        band==='Slightly Elevated Risk' ? 'var(--halo-slight)' :
-        'var(--halo-low)';
+      const xPct = sliceStart + inset + rel * usable;
+      ptr.style.left = xPct + '%';
 
-      // Score pointer
-      const scoreX = xFor(v);
-      const triW = 12, triH = 9;
-      const pointer = `<polygon points="${scoreX},${barY+barH-1} ${scoreX-triW/2},${barY+barH-1-triH} ${scoreX+triW/2},${barY+barH-1-triH}" fill="var(--york-red-dark)"></polygon>`;
-
-      // SVG (bar only)
-      const svg = `
-        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Risk spectrum with score indicator">
-          <rect x="${pad}" y="${barY}" width="${usableW}" height="${barH}" rx="12" fill="#f3f4f6" stroke="#e5e7eb"/>
-          <rect x="${haloX}" y="${barY}" width="${HALO_W}" height="${barH}" rx="12" fill="${haloFill}"/>
-          ${pointer}
-        </svg>`;
-
-      // HTML labels
-      const labels = ['Low','Slightly Elevated','Elevated','Very Elevated'];
-      const activeIndex =
-        band==='Very Elevated Risk' ? 3 :
-        band==='Elevated Risk' ? 2 :
-        band==='Slightly Elevated Risk' ? 1 : 0;
-      const cls = ['low','slight','elev','very'];
-      const row = `
-        <div class="band-labels" role="group" aria-label="Risk bands">
-          ${labels.map((t,i)=>`<span class="${i===activeIndex ? `active ${cls[i]}` : ''}">${t}</span>`).join('')}
-        </div>`;
-
-      host.innerHTML = svg + row;
+      // Active label coloring
+      labels.forEach((el,i)=>{
+        el.classList.remove('active','low','slight','elev','very');
+        if (i===idx){ el.classList.add('active', ['low','slight','elev','very'][i]); }
+      });
     }
 
-    // ---------- Verbatim summary blurbs from PDF ----------
+    // ---------- Verbatim summary blurbs ----------
     const VERBATIM = {
       expoVE: "This youth is presenting with a significant number of exploitation warning signs placing them at a very elevated risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
       expoE:  "This youth is presenting with a significant number of exploitation warning signs placing them at an  elevated risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
@@ -480,7 +491,6 @@
       document.getElementById('printMeta').textContent = `Screened on ${stamp} • This printout is generated from a device-only session.`;
 
       const f1 = sum(F1_IDS), f2 = sum(F2_IDS);
-
       const B1 = bandF1(f1);
       const B2 = bandF2(f2);
 
@@ -488,11 +498,11 @@
       setRiskRow({pillId:'f1Pill', blurbId:'f1Blurb', band:B1, factor:'f1'});
       setRiskRow({pillId:'f2Pill', blurbId:'f2Blurb', band:B2, factor:'f2'});
 
-      // Spectrum strips
-      drawSpectrumBar({containerId:'f1Chart', value:f1, max:CUTS.f1.max, cuts:CUTS.f1, band:B1});
-      drawSpectrumBar({containerId:'f2Chart', value:f2, max:CUTS.f2.max, cuts:CUTS.f2, band:B2});
+      // Gauges (pointer proportional *within* selected band)
+      setGaugeWithinBand({gaugeId:'f1Gauge', pointerId:'f1Ptr', labelsId:'f1Labels', band:B1, score:f1, cuts:CUTS.f1});
+      setGaugeWithinBand({gaugeId:'f2Gauge', pointerId:'f2Ptr', labelsId:'f2Labels', band:B2, score:f2, cuts:CUTS.f2});
 
-      // Summary (verbatim)
+      // Summary
       document.getElementById('summaryBlurb').textContent = chooseSummary(f1, f2);
 
       // Lists
