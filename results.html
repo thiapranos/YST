@@ -22,11 +22,15 @@
       --risk-elev:#fb923c;         /* orange */
       --risk-very:#E31837;         /* red */
 
-      /* Segment tints */
-      --seg-low:#dcfce7;
-      --seg-slight:#fef9c3;
-      --seg-elev:#ffedd5;
-      --seg-very:#fee2e2;
+      /* Halo tints */
+      --halo-low:#dcfce7;
+      --halo-slight:#fef9c3;
+      --halo-elev:#ffedd5;
+      --halo-very:#ffe4e6;
+
+      /* Text colors for contrast on yellow/orange labels */
+      --risk-slight-text:#a16207;
+      --risk-elev-text:#c2410c;
     }
     *{box-sizing:border-box}
     body{
@@ -45,28 +49,43 @@
     .title{font-size:18px;font-weight:700;margin:0}
     .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-    /* Pills + risk row */
+    /* Risk row */
     .riskline{display:flex;align-items:center;gap:12px;margin-top:8px;min-height:44px}
     .pill{
       display:inline-flex;align-items:center;gap:8px;
       padding:10px 14px;border-radius:999px;font-weight:700;font-size:12px;border:1px solid transparent;min-height:36px;
-      white-space:nowrap; /* keep “Low Risk” on one line */
+      white-space:nowrap;
     }
     .pill.low{ background:var(--risk-low); color:#fff }
     .pill.slight{ background:var(--risk-slight); color:#111; border-color:#f1cc05 }
     .pill.elev{ background:var(--risk-elev); color:#111; border-color:#f78a2d }
     .pill.very{ background:var(--risk-very); color:#fff }
-
     .pill .ico{ width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center }
     .factor-blurb{ font-size:13px; color:#374151; }
 
     /* Notice */
     .ephemeral{border:1px dashed var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:#7a1b25;background:#fff6f7;margin:10px 0 14px 0}
 
-    /* Spectrum strip */
+    /* Spectrum */
     .chart-wrap{margin-top:12px}
     .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden;min-height:112px}
-    .chart-box > div{min-height:92px}
+    .chart-box > div{min-height:72px} /* svg bar only; labels are HTML below */
+
+    /* Band labels under the bar */
+    .band-labels{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:6px;
+      margin-top:8px;
+      font-size:12px;
+      font-weight:600;
+      color:#6b7280;   /* default muted */
+    }
+    .band-labels span{ text-align:center }
+    .band-labels .active.low{ color:var(--risk-low) }
+    .band-labels .active.slight{ color:var(--risk-slight-text) }
+    .band-labels .active.elev{ color:var(--risk-elev-text) }
+    .band-labels .active.very{ color:var(--york-red) }
 
     /* Dropdown arrows */
     details{margin-top:10px}
@@ -217,11 +236,11 @@
     const F1_IDS = ['yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn','yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf','yst8b_trnsprtt','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8h_id','yst8_rprts_sx','yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'];
     const F2_IDS = ['yst1f_fnncll__','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh','yst6c_fearful','yst6d_self_hrm','yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t','yst8g_housing','yst6f_chngd_pp'];
 
-    // ---------- Cut-offs (bands) ----------
+    // ---------- NEW cut-offs (percentile bands) ----------
+    // Exploitation: <5 Low, 5–10 Slightly Elevated, 11–16 Elevated, ≥17 Very Elevated
+    // Recruitment:  <7 Low, 7–10 Slightly Elevated, 13–19 Elevated, ≥20 Very Elevated
     const CUTS = {
-      // Exploitation: <5 Low, 5–10 Slightly Elevated, 11–16 Elevated, ≥17 Very Elevated
       f1: { lowMax: 4, slightMin: 5, elevMin: 11, veryMin: 17, max: F1_IDS.length*3 },
-      // Recruitment:  <7 Low, 7–10 Slightly Elevated, 13–19 Elevated, ≥20 Very Elevated
       f2: { lowMax: 6, slightMin: 7, elevMin: 13, veryMin: 20, max: F2_IDS.length*3 }
     };
 
@@ -316,7 +335,7 @@
       return 'Low Risk';
     }
 
-    // ---------- Factor blurbs (beside the pill) ----------
+    // Blurb beside each pill
     function factorBlurb(factor, band){
       const isExpo = factor === 'f1';
       const domain = isExpo ? 'exploitation' : 'recruitment';
@@ -326,7 +345,7 @@
       return `Ratings on this scale indicate that the youth has fewer or comparable ${domain} warning signs to other youth involved with child welfare.`;
     }
 
-    // ---------- Risk pill (color + icon + text) ----------
+    // Risk pill (with icons)
     function setRiskRow({pillId, blurbId, band, factor}){
       const pill = document.getElementById(pillId);
       const txt = pill.querySelector('.txt');
@@ -342,88 +361,70 @@
 
       let svg='';
       if (band==='Low Risk'){
-        svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+        svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
       } else if (band==='Slightly Elevated Risk'){
-        svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/></svg>';
+        svg = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fff"/><line x1="12" y1="7" x2="12" y2="13" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="17" r="1.8" fill="currentColor"/></svg>';
       } else {
-        svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+        /* Solid hazard triangle */
+        svg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 22 20H2L12 2z" fill="#fff"></path><rect x="11" y="8" width="2" height="7" fill="currentColor"></rect><rect x="11" y="16.5" width="2" height="2" rx="1" fill="currentColor"></rect></svg>';
       }
       ico.innerHTML = svg;
 
       document.getElementById(blurbId).textContent = factorBlurb(factor, band);
     }
 
-    /* ---------- Four-segment spectrum bar with even-spaced labels ---------- */
-    function drawSpectrumBar({containerId, value, max, cuts, activeColorVar}){
-      const w = 520, h = 96, pad = 14;
+    /* Spectrum bar (SVG) + band labels (HTML) */
+    function drawSpectrumBar({containerId, value, max, cuts, band}){
+      const host = document.getElementById(containerId);
+      const w = 520, h = 72, pad = 14;
       const usableW = w - pad*2;
       const clamp = n => Math.max(0, Math.min(n, max));
       const v = clamp(value);
 
-      // Segments by score
-      const segs = [
-        {label:'Low', from:0, to:cuts.slightMin, tint:'var(--seg-low)', text:'var(--risk-low)'},
-        {label:'Slightly Elevated', from:cuts.slightMin, to:cuts.elevMin, tint:'var(--seg-slight)', text:'var(--risk-slight)'},
-        {label:'Elevated', from:cuts.elevMin, to:cuts.veryMin, tint:'var(--seg-elev)', text:'var(--risk-elev)'},
-        {label:'Very Elevated', from:cuts.veryMin, to:max, tint:'var(--seg-very)', text:'var(--risk-very)'}
-      ];
-
-      const segIndex = segs.findIndex(s => v >= s.from && v < s.to || (v===max && s.to===max));
-      const barY = h/2 - 14, barH = 22;
       const xFor = val => pad + (val/max)*usableW;
+      const barY = h/2 - 12, barH = 24;
 
-      // Optional "next threshold" within 10% of total scale
-      let nextX = null;
-      if (segIndex >= 0 && segIndex < 3){
-        const nextBoundary = segs[segIndex].to;
-        const near = (nextBoundary - v) / max <= 0.10 && v <= nextBoundary;
-        if (near) nextX = xFor(nextBoundary);
-      }
+      // Score halo (fixed width)
+      const HALO_W = 110;
+      let haloX = xFor(v) - HALO_W/2;
+      if (haloX < pad) haloX = pad;
+      if (haloX + HALO_W > w - pad) haloX = w - pad - HALO_W;
 
-      // Segment fills (only tint active)
-      const segRects = segs.map((s,i)=>{
-        const x1 = xFor(s.from), x2 = xFor(s.to), wSeg = Math.max(0, x2 - x1);
-        const fill = (i===segIndex) ? s.tint : 'transparent';
-        return `<rect x="${x1}" y="${barY}" width="${wSeg}" height="${barH}" rx="12" fill="${fill}"></rect>`;
-      }).join('');
+      const haloFill =
+        band==='Very Elevated Risk' ? 'var(--halo-very)' :
+        band==='Elevated Risk' ? 'var(--halo-elev)' :
+        band==='Slightly Elevated Risk' ? 'var(--halo-slight)' :
+        'var(--halo-low)';
 
-      // Score tick
+      // Score pointer
       const scoreX = xFor(v);
-      const triW = 10, triH = 8;
-      const tri = `<polygon points="${scoreX},${barY+barH-1} ${scoreX-triW/2},${barY+barH-1-triH} ${scoreX+triW/2},${barY+barH-1-triH}" fill="var(--york-red-dark)"></polygon>`;
+      const triW = 12, triH = 9;
+      const pointer = `<polygon points="${scoreX},${barY+barH-1} ${scoreX-triW/2},${barY+barH-1-triH} ${scoreX+triW/2},${barY+barH-1-triH}" fill="var(--york-red-dark)"></polygon>`;
 
-      // Next threshold marker
-      const nextMarker = (nextX!==null)
-        ? `<line x1="${nextX}" y1="${barY-8}" x2="${nextX}" y2="${barY+barH+8}" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="4 3"/>
-           <text class="cut-label" x="${nextX}" y="${barY-10}" text-anchor="middle" font-size="11" fill="#6b7280">next threshold</text>`
-        : '';
-
-      // EVEN-SPACED LABELS (avoid bunching)
-      const labelCenters = [
-        pad + usableW*0.125,
-        pad + usableW*0.375,
-        pad + usableW*0.625,
-        pad + usableW*0.875
-      ];
-      const labels = segs.map((s,i)=>{
-        const cx = labelCenters[i];
-        const fill = (i===segIndex) ? s.text : '#6b7280';
-        const weight = (i===segIndex) ? '700' : '600';
-        return `<text x="${cx}" y="${barY+barH+18}" text-anchor="middle" font-size="11" fill="${fill}" style="font-weight:${weight}">${s.label}</text>`;
-      }).join('');
-
+      // SVG (bar only)
       const svg = `
-        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Four-band spectrum with your score marker">
+        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Risk spectrum with score indicator">
           <rect x="${pad}" y="${barY}" width="${usableW}" height="${barH}" rx="12" fill="#f3f4f6" stroke="#e5e7eb"/>
-          ${segRects}
-          ${tri}
-          ${nextMarker}
-          ${labels}
+          <rect x="${haloX}" y="${barY}" width="${HALO_W}" height="${barH}" rx="12" fill="${haloFill}"/>
+          ${pointer}
         </svg>`;
-      document.getElementById(containerId).innerHTML = svg;
+
+      // HTML labels
+      const labels = ['Low','Slightly Elevated','Elevated','Very Elevated'];
+      const activeIndex =
+        band==='Very Elevated Risk' ? 3 :
+        band==='Elevated Risk' ? 2 :
+        band==='Slightly Elevated Risk' ? 1 : 0;
+      const cls = ['low','slight','elev','very'];
+      const row = `
+        <div class="band-labels" role="group" aria-label="Risk bands">
+          ${labels.map((t,i)=>`<span class="${i===activeIndex ? `active ${cls[i]}` : ''}">${t}</span>`).join('')}
+        </div>`;
+
+      host.innerHTML = svg + row;
     }
 
-    // ---------- Verbatim summary blurbs from PDF (unchanged) ----------
+    // ---------- Verbatim summary blurbs from PDF ----------
     const VERBATIM = {
       expoVE: "This youth is presenting with a significant number of exploitation warning signs placing them at a very elevated risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
       expoE:  "This youth is presenting with a significant number of exploitation warning signs placing them at an  elevated risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
@@ -487,11 +488,11 @@
       setRiskRow({pillId:'f1Pill', blurbId:'f1Blurb', band:B1, factor:'f1'});
       setRiskRow({pillId:'f2Pill', blurbId:'f2Blurb', band:B2, factor:'f2'});
 
-      // Spectrum strips (even-spaced labels; active label tinted)
-      drawSpectrumBar({containerId:'f1Chart', value:f1, max:CUTS.f1.max, cuts:CUTS.f1});
-      drawSpectrumBar({containerId:'f2Chart', value:f2, max:CUTS.f2.max, cuts:CUTS.f2});
+      // Spectrum strips
+      drawSpectrumBar({containerId:'f1Chart', value:f1, max:CUTS.f1.max, cuts:CUTS.f1, band:B1});
+      drawSpectrumBar({containerId:'f2Chart', value:f2, max:CUTS.f2.max, cuts:CUTS.f2, band:B2});
 
-      // Summary
+      // Summary (verbatim)
       document.getElementById('summaryBlurb').textContent = chooseSummary(f1, f2);
 
       // Lists
@@ -518,3 +519,4 @@
   </script>
 </body>
 </html>
+
