@@ -58,12 +58,10 @@
       list-style:none;
     }
     summary::before{
-      content:"▸"; display:inline-block;  font-size:22px;       /* bigger arrow */
-  font-weight:700;      /* makes arrow thicker */
-  color:#333;           /* darker for clarity */
-  width:1.2em;          /* slightly wider spacing */
-  margin-right:8px;     /* more space from text */ 
-  width:1em; margin-right:6px; transition:transform .2s ease;
+      content:"▸"; display:inline-block;
+      font-size:22px; font-weight:700; color:#333;
+      width:1.2em; margin-right:8px;
+      transition:transform .2s ease;
     }
     details[open] summary::before{ transform:rotate(90deg); }
 
@@ -74,10 +72,18 @@
     .btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
     .print-note{font-size:12px;color:var(--muted)}
 
+    /* "More info" link */
+    .more-info{
+      margin-left:auto; font-size:13px; font-weight:700; color:var(--york-red); text-decoration:none;
+    }
+    .more-info:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+    .more-info:hover{ text-decoration:underline; }
+
     footer{margin-top:14px;text-align:center;font-size:13px;color:var(--muted)}
 
     /* Summary card at the top (BLURB ONLY) */
-    .summary{display:grid;gap:12px;min-height:80px} /* smaller since pills removed */
+    .summary{display:grid;gap:12px;min-height:80px}
+    .summary-head{display:flex;align-items:center;gap:12px}
     #summaryBlurb{min-height:48px;display:flex;align-items:center;font-size:14px}
     .summary-note{font-size:12px;color:var(--muted)}
 
@@ -90,7 +96,7 @@
       .hero{ box-shadow:none; border:0; padding:0 }
       .print-only{ display:block !important }
       .chart-box{ border:1px solid #000 }
-      .cut-label{ fill:#000 !important }
+      .cut-label, .score-label{ fill:#000 !important }
       .ephemeral{ border-color:#000; background:#fff; color:#000 }
     }
   </style>
@@ -111,12 +117,15 @@
 
       <!-- ===== Summary (BLURB ONLY) ===== -->
       <div class="card summary" id="summaryCard" aria-labelledby="summaryTitle">
-        <h2 class="title" id="summaryTitle">Summary</h2>
+        <div class="summary-head">
+          <h2 class="title" id="summaryTitle" style="margin:0;">Summary</h2>
+          <!-- Placeholder PDF link -->
+          <a class="more-info" href="/docs/yst-interpretation.pdf" target="_blank" rel="noopener">More info</a>
+        </div>
 
         <!-- Print-only timestamp/meta -->
         <div id="printMeta" class="print-only" style="font-size:12px;color:#333;margin-bottom:6px;"></div>
 
-        <!-- Removed the two factor rows & pills -->
         <div id="summaryBlurb"></div>
         <div class="summary-note">Use clinical judgement and local safety procedures. Scores support—do not replace—professional decision-making.</div>
       </div>
@@ -174,13 +183,13 @@
       </div>
     </section>
 
-   <footer>
-  <small>
-    Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions.<br>
-    © 2025 Teen Relationships Lab, York University. No distribution of this tool outside your agency.
-  </small>
-</footer>
-</main>
+    <footer>
+      <small>
+        Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions.<br>
+        © 2025 Teen Relationships Lab, York University. No distribution of this tool outside your agency.
+      </small>
+    </footer>
+  </main>
 
   <script>
     // ---------- Data ----------
@@ -192,9 +201,6 @@
       f1: { moderateMin: 9, moderateMax: 14, highMin: 15 }, // Exploitation: Low <9, Mod 9–14, High 15+
       f2: { highMin: 10 }                                   // Recruitment: Low <10, High >=10 (no moderate yet)
     };
-
-    // No reverse-coding here (factor page already normalized)
-    const REVERSED = new Set();
 
     // Treat "1" as No-Info by default; set YST_TREAT_ONE_AS_NI='0' to disable.
     const TREAT_ONE_AS_NI = localStorage.getItem('YST_TREAT_ONE_AS_NI') !== '0';
@@ -318,46 +324,77 @@
       line.appendChild(msg);
     }
 
-    // ===== Horizontal bars without numbers =====
+    // ===== Horizontal bars without numbers + markers =====
     function drawHorizontalBarF1(containerId, value, max){
-      const w = 520, h = 64, pad = 14;
-      const usableW = w - pad*2;
-      const clamp = n => Math.max(0, Math.min(n, max));
-      const valW = (clamp(value)/max)*usableW;
+  const w = 520, h = 82, pad = 14;
+  const usableW = w - pad*2;
+  const clamp = n => Math.max(0, Math.min(n, max));
+  const v = clamp(value);
+  const valW = (v/max)*usableW;
 
-      const modStart = THRESH.f1.moderateMin, modEnd = THRESH.f1.moderateMax, highStart = THRESH.f1.highMin;
-      const modX = pad + (modStart/max)*usableW;
-      const modW = ((modEnd - modStart)/max)*usableW;
-      const highX = pad + (highStart/max)*usableW;
+  const modStart = THRESH.f1.moderateMin, modEnd = THRESH.f1.moderateMax, highStart = THRESH.f1.highMin;
+  const modX = pad + (modStart/max)*usableW;
+  const modW = ((modEnd - modStart)/max)*usableW;
+  const highX = pad + (highStart/max)*usableW;
+  const scoreX = pad + (v/max)*usableW;
 
-      const svg = `
-        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Visual bar with moderate band and cut-off">
-          <rect x="${pad}" y="${h/2 - 10}" width="${usableW}" height="20" rx="10" fill="#f3f4f6" stroke="#e5e7eb"/>
-          <rect x="${modX}" y="${h/2 - 10}" width="${modW}" height="20" rx="8" fill="#fde68a" opacity="0.6"/>
-          <rect x="${pad}" y="${h/2 - 10}" width="${valW}" height="20" rx="10" fill="var(--york-red)"/>
-          <line class="cut-line" x1="${highX}" y1="${h/2 - 14}" x2="${highX}" y2="${h/2 + 14}" stroke="#111" stroke-width="2"/>
-          <text class="cut-label" x="${highX}" y="${h/2 - 18}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
-        </svg>`;
-      document.getElementById(containerId).innerHTML = svg;
-    }
+  // --- Edge-safe label placement ---
+  const LABEL_PAD = 28;                        // min space from edges so text won't clip
+  const minX = pad + LABEL_PAD;
+  const maxX = w - pad - LABEL_PAD;
+  const labelXRaw = scoreX;
+  const labelX = Math.max(minX, Math.min(labelXRaw, maxX));
+  const anchor = (labelXRaw <= minX) ? 'start' : (labelXRaw >= maxX) ? 'end' : 'middle';
 
-    function drawHorizontalBarF2(containerId, value, max){
-      const w = 520, h = 64, pad = 14;
-      const usableW = w - pad*2;
-      const clamp = n => Math.max(0, Math.min(n, max));
-      const valW = (clamp(value)/max)*usableW;
+  const svg = `
+    <svg width="100%" viewBox="0 0 ${w} ${h}" role="img"
+         aria-label="Visual bar with moderate band, high cut-off, and your score marker">
+      <rect x="${pad}" y="${h/2 - 16}" width="${usableW}" height="22" rx="11" fill="#f3f4f6" stroke="#e5e7eb"/>
+      <rect x="${modX}" y="${h/2 - 16}" width="${modW}" height="22" rx="10" fill="#fde68a" opacity="0.6"/>
+      <rect x="${pad}" y="${h/2 - 16}" width="${valW}" height="22" rx="11" fill="var(--york-red)"/>
+      <!-- High cutoff -->
+      <line class="cut-line" x1="${highX}" y1="${h/2 - 20}" x2="${highX}" y2="${h/2 + 20}" stroke="#111" stroke-width="2"/>
+      <text class="cut-label" x="${highX}" y="${h/2 - 26}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
+      <!-- Your score marker -->
+      <line x1="${scoreX}" y1="${h/2 - 20}" x2="${scoreX}" y2="${h/2 + 20}" stroke="var(--york-red-dark)" stroke-width="2" stroke-dasharray="3 3"/>
+      <text class="score-label" x="${labelX}" y="${h/2 + 34}" text-anchor="${anchor}" font-size="11" fill="var(--york-red-dark)">Your score</text>
+    </svg>`;
+  document.getElementById(containerId).innerHTML = svg;
+}
 
-      const cutX = pad + (THRESH.f2.highMin/max)*usableW;
+function drawHorizontalBarF2(containerId, value, max){
+  const w = 520, h = 82, pad = 14;
+  const usableW = w - pad*2;
+  const clamp = n => Math.max(0, Math.min(n, max));
+  const v = clamp(value);
+  const valW = (v/max)*usableW;
 
-      const svg = `
-        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Visual bar with cut-off">
-          <rect x="${pad}" y="${h/2 - 10}" width="${usableW}" height="20" rx="10" fill="#f3f4f6" stroke="#e5e7eb"/>
-          <rect x="${pad}" y="${h/2 - 10}" width="${valW}" height="20" rx="10" fill="var(--york-red)"/>
-          <line class="cut-line" x1="${cutX}" y1="${h/2 - 14}" x2="${cutX}" y2="${h/2 + 14}" stroke="#111" stroke-width="2"/>
-          <text class="cut-label" x="${cutX}" y="${h/2 - 18}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
-        </svg>`;
-      document.getElementById(containerId).innerHTML = svg;
-    }
+  const cutX = pad + (THRESH.f2.highMin/max)*usableW;
+  const scoreX = pad + (v/max)*usableW;
+
+  // --- Edge-safe label placement ---
+  const LABEL_PAD = 28;
+  const minX = pad + LABEL_PAD;
+  const maxX = w - pad - LABEL_PAD;
+  const labelXRaw = scoreX;
+  const labelX = Math.max(minX, Math.min(labelXRaw, maxX));
+  const anchor = (labelXRaw <= minX) ? 'start' : (labelXRaw >= maxX) ? 'end' : 'middle';
+
+  const svg = `
+    <svg width="100%" viewBox="0 0 ${w} ${h}" role="img"
+         aria-label="Visual bar with high cut-off and your score marker">
+      <rect x="${pad}" y="${h/2 - 16}" width="${usableW}" height="22" rx="11" fill="#f3f4f6" stroke="#e5e7eb"/>
+      <rect x="${pad}" y="${h/2 - 16}" width="${valW}" height="22" rx="11" fill="var(--york-red)"/>
+      <!-- High cutoff -->
+      <line class="cut-line" x1="${cutX}" y1="${h/2 - 20}" x2="${cutX}" y2="${h/2 + 20}" stroke="#111" stroke-width="2"/>
+      <text class="cut-label" x="${cutX}" y="${h/2 - 26}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
+      <!-- Your score marker -->
+      <line x1="${scoreX}" y1="${h/2 - 20}" x2="${scoreX}" y2="${h/2 + 20}" stroke="var(--york-red-dark)" stroke-width="2" stroke-dasharray="3 3"/>
+      <text class="score-label" x="${labelX}" y="${h/2 + 34}" text-anchor="${anchor}" font-size="11" fill="var(--york-red-dark)">Your score</text>
+    </svg>`;
+  document.getElementById(containerId).innerHTML = svg;
+}
+
 
     // ===== Summary blurb placeholders (no numbers) =====
     const BLURBS = {
@@ -376,9 +413,9 @@
       ul.innerHTML = '';
       const items = buildConfirmedList(ids);
       if (!items.length){ ul.innerHTML = '<li>No items to display.</li>'; return; }
-      items.forEach(({id, raw})=>{
+      items.forEach(({id})=>{
         const li = document.createElement('li');
-        li.textContent = `${LABELS[id] || id} — ${tag(raw)}`;
+        li.textContent = LABELS[id] || id;
         ul.appendChild(li);
       });
     }
@@ -411,14 +448,14 @@
       document.getElementById('summaryBlurb').textContent = summaryBlurb(L1, L2);
 
       // SR-only descriptions (no numeric values)
-      document.getElementById('f1Nums').textContent = 'Exploitation indicator bar with moderate band and high cut-off.';
-      document.getElementById('f2Nums').textContent = 'Recruitment indicator bar with high cut-off.';
+      document.getElementById('f1Nums').textContent = 'Exploitation indicator bar with moderate band, high cut-off, and your score marker.';
+      document.getElementById('f2Nums').textContent = 'Recruitment indicator bar with high cut-off and your score marker.';
 
       // Risk lines
       setRiskLine('f1RiskLine','f1Pill', L1, 'exploitation warning signs');
       setRiskLine('f2RiskLine','f2Pill', L2, 'recruitment warning signs');
 
-      // Charts
+      // Charts (now with "Your score" marker)
       drawHorizontalBarF1('f1Chart', f1, f1Max);
       drawHorizontalBarF2('f2Chart', f2, f2Max);
 
@@ -448,5 +485,3 @@
   </script>
 </body>
 </html>
-
-
