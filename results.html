@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Screener Results</title>
 
-  <!-- Font fallback performance -->
+  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,16 +39,14 @@
     .pill.mod{color:#111;background:#fde68a;border-color:#fcd34d}
     .pill.ok{color:#374151;background:#f3f4f6;border-color:#e5e7eb}
     .riskline{display:flex;align-items:center;gap:10px;margin-top:8px;min-height:40px}
-    .hazard,.okicon{width:18px;height:18px;display:inline-block}
-    .hazard svg,.okicon svg{display:block;width:100%;height:100%}
 
-    /* Ephemeral-data notice */
+    /* Notice */
     .ephemeral{border:1px dashed var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:#7a1b25;background:#fff6f7;margin:10px 0 14px 0}
 
     /* Horizontal chart */
     .chart-wrap{margin-top:12px}
-    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden;min-height:116px}
-    .chart-box > div{min-height:96px} /* Reserve space for pill label */
+    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden;min-height:128px}
+    .chart-box > div{min-height:108px}
 
     /* Dropdown arrows */
     details{margin-top:10px}
@@ -71,22 +69,22 @@
     .btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
     .print-note{font-size:12px;color:var(--muted)}
 
-    /* "More info" link */
+    /* "More info" placeholder link */
     .more-info{
       margin-left:auto; font-size:13px; font-weight:700; color:var(--york-red); text-decoration:none;
     }
-    .more-info:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
     .more-info:hover{ text-decoration:underline; }
+    .more-info:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
 
     footer{margin-top:14px;text-align:center;font-size:13px;color:var(--muted)}
 
-    /* Summary card at the top (BLURB ONLY) */
+    /* Summary (blurb only) */
     .summary{display:grid;gap:12px;min-height:80px}
     .summary-head{display:flex;align-items:center;gap:12px}
     #summaryBlurb{min-height:48px;display:flex;align-items:center;font-size:14px}
-    .summary-note{font-size:12px;color:var(--muted)}
+    .summary-note{font-size:12px;color:#6b7280}
 
-    /* Print polish */
+    /* Print */
     .print-only{display:none}
     @media print{
       @page{ margin:16mm }
@@ -109,26 +107,22 @@
       </div>
       <h1>Screener Results</h1>
 
-      <!-- Ephemeral-data notice -->
       <div class="ephemeral" role="note" aria-live="polite">
         <strong>Results are not saved.</strong> Print/save a PDF or record outcomes per agency procedure before leaving or refreshing. Use the button at the bottom of the page.
       </div>
 
-      <!-- ===== Summary (BLURB ONLY) ===== -->
+      <!-- Summary -->
       <div class="card summary" id="summaryCard" aria-labelledby="summaryTitle">
         <div class="summary-head">
           <h2 class="title" id="summaryTitle" style="margin:0;">Summary</h2>
-          <!-- Placeholder PDF link -->
           <a class="more-info" href="/docs/yst-interpretation.pdf" target="_blank" rel="noopener">More info</a>
         </div>
 
-        <!-- Print-only timestamp/meta -->
         <div id="printMeta" class="print-only" style="font-size:12px;color:#333;margin-bottom:6px;"></div>
 
         <div id="summaryBlurb"></div>
         <div class="summary-note">Use clinical judgement and local safety procedures. Scores support—do not replace—professional decision-making.</div>
       </div>
-      <!-- ===== End Summary ===== -->
 
       <div class="stack">
         <!-- Factor 1 -->
@@ -167,7 +161,7 @@
           </details>
         </div>
 
-        <!-- Combined No Info / Maybe section (under second factor) -->
+        <!-- Combined No Info / Maybe -->
         <div class="card">
           <details>
             <summary>Items marked “No Info” or “Maybe” (investigate)</summary>
@@ -195,17 +189,19 @@
     const F1_IDS = ['yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn','yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf','yst8b_trnsprtt','yst8d_ntrnt_bh','yst8_trffckng','yst8f_awol','yst8h_id','yst8_rprts_sx','yst9_csh_nd_gd','yst9b_hotels','yst9c_cll_phns'];
     const F2_IDS = ['yst1f_fnncll__','yst3a_sexul_bs','yst4_crgrvr_spr','yst4_pr_rltnsh','yst6c_fearful','yst6d_self_hrm','yst7f_neds_nmt','yst8c_schl_ttn','yst7c_xpsd_dr_','yst8a_sbstnc_s','yst1h_jstc_sys','yst6g_physcl_t','yst8g_housing','yst6f_chngd_pp'];
 
-    // Thresholds (internally used; not displayed)
-    const THRESH = {
-      f1: { moderateMin: 9, moderateMax: 14, highMin: 15 }, // Exploitation: Low <9, Mod 9–14, High 15+
-      f2: { highMin: 10 }                                   // Recruitment: Low <10, High >=10 (no moderate yet)
+    // ---------- NEW cut-offs (percentile bands) ----------
+    // Exploitation: <5 Low, 5–10 Slightly Elevated, 11–16 Elevated, ≥17 Very Elevated
+    // Recruitment:  <7 Low, 7–10 Slightly Elevated, 13–19 Elevated, ≥20 Very Elevated
+    const CUTS = {
+      f1: { lowMax: 4, slightMin: 5, elevMin: 11, veryMin: 17, max: F1_IDS.length*3 },
+      f2: { lowMax: 6, slightMin: 7, elevMin: 13, veryMin: 20, max: F2_IDS.length*3 }
     };
 
-    // Treat "1" as No-Info by default; set YST_TREAT_ONE_AS_NI='0' to disable.
+    // Treat "1" as No Info by default
     const TREAT_ONE_AS_NI = localStorage.getItem('YST_TREAT_ONE_AS_NI') !== '0';
     const niRegex = /^(ni|no[\s_]?info|no[-\s]?information|unsure|unknown)$/i;
 
-    // Wording synced with factor page
+    // Labels (unchanged)
     const LABELS = {
       yst5b_sxl_prtn:"Youth has had multiple sexual partners in the last year (4 or more)",
       yst5c_nn_dscls:"Youth is non-disclosing when it comes to sharing about their romantic partner",
@@ -248,125 +244,96 @@
       const num = parseInt(raw, 10);
       return isNaN(num) ? raw : num;
     }
-
-    // Ignore "No Info" (1) in sums when TREAT_ONE_AS_NI is on
     function sum(ids){
       return ids.reduce((acc,id)=>{
         const v = parseInt(localStorage.getItem(id) || '0', 10);
         if (isNaN(v)) return acc;
-        if (TREAT_ONE_AS_NI && v === 1) return acc;
+        if (TREAT_ONE_AS_NI && v === 1) return acc; // ignore "No Info"
         return acc + v;
       },0);
     }
 
-    // Confirmed-risk list: only YES (raw === 3)
+    // Confirmed (Yes only)
     function buildConfirmedList(ids){
       const out = [];
       ids.forEach(id=>{
         const stored = parseInt(localStorage.getItem(id) || '0', 10);
-        if (!isNaN(stored) && stored === 3){ out.push({ id, raw: 3 }); }
+        if (!isNaN(stored) && stored === 3){ out.push({ id }); }
       });
       return out;
     }
 
+    // No Info / Maybe combined
     function isNoInfo(id){
       const flag = localStorage.getItem(id + '_ni') === '1' || localStorage.getItem('ni_' + id) === '1';
       const val = getStored(id);
       if (flag) return true;
       if (val === null) return false;
-      if (typeof val === 'number') return (TREAT_ONE_AS_NI && val === 1) || val === 2; // 1 = No Info, 2 = Maybe
+      if (typeof val === 'number') return (TREAT_ONE_AS_NI && val === 1) || val === 2;
       return niRegex.test(String(val));
     }
+    function buildCombinedNI(idsA, idsB){ return [...idsA, ...idsB].filter(id => isNoInfo(id)); }
 
-    // Combined No Info/Maybe across both factors
-    function buildCombinedNI(idsA, idsB){
-      const all = [...idsA, ...idsB];
-      return all.filter(id => isNoInfo(id));
+    // ---------- New band calculators ----------
+    function bandF1(score){
+      if (score >= CUTS.f1.veryMin) return 'Very Elevated Risk';
+      if (score >= CUTS.f1.elevMin) return 'Elevated Risk';
+      if (score >= CUTS.f1.slightMin) return 'Slightly Elevated Risk';
+      return 'Low Risk';
+    }
+    function bandF2(score){
+      if (score >= CUTS.f2.veryMin) return 'Very Elevated Risk';
+      if (score >= CUTS.f2.elevMin) return 'Elevated Risk';
+      if (score >= CUTS.f2.slightMin) return 'Slightly Elevated Risk';
+      return 'Low Risk';
     }
 
-    // Risk level calculators (visual-only; no numbers shown)
-    function levelF1(score){
-      if (score >= THRESH.f1.highMin) return 'High';
-      if (score >= THRESH.f1.moderateMin && score <= THRESH.f1.moderateMax) return 'Moderate';
-      return 'Low';
-    }
-    function levelF2(score){ return score >= THRESH.f2.highMin ? 'High' : 'Low'; }
-
-    // Line + pill
-    function setRiskLine(containerId, pillId, level, label){
-      const line = document.getElementById(containerId);
+    // ---------- Riskline pill (no sentence, just band name) ----------
+    function setRiskLine(containerId, pillId, band){
       const pill = document.getElementById(pillId);
-
-      pill.className = 'pill ' + (level==='High' ? 'high' : level==='Moderate' ? 'mod' : 'ok');
-      pill.textContent = level + ' risk';
-
-      const oldMsg = line.querySelector('.risk-msg'); if (oldMsg) oldMsg.remove();
-      const oldIcon = line.querySelector('.hazard, .okicon'); if (oldIcon) oldIcon.remove();
-
-      const iconWrap = document.createElement('span');
-      iconWrap.className = (level==='High') ? 'hazard' : 'okicon';
-      iconWrap.innerHTML = (level==='High')
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-
-      const msg = document.createElement('span');
-      msg.className = 'risk-msg';
-      msg.textContent = (level==='High')
-        ? `Indicators suggest high risk related to ${label}.`
-        : (level==='Moderate')
-          ? `Indicators suggest moderate concern related to ${label}.`
-          : `Indicators do not suggest high risk related to ${label}.`;
-
-      line.insertBefore(iconWrap, line.firstChild);
-      line.appendChild(msg);
+      pill.className = 'pill ' + (
+        band === 'Very Elevated Risk' || band === 'Elevated Risk' ? 'high' :
+        band === 'Slightly Elevated Risk' ? 'mod' : 'ok'
+      );
+      pill.textContent = band;
     }
 
-    /* ---------- Bar charts with smart "Your score" pill ---------- */
-    function drawBar({containerId, value, max, cutXList=[], showModerate=false, modStart=0, modEnd=0}) {
-      const w = 520, h = 96, pad = 14;
+    /* ---------- Bar charts with 50+/75+/90+ and “Your score” pill ---------- */
+    function drawBar({containerId, value, max, cutValues=[]}){
+      const w = 520, h = 108, pad = 14;
       const usableW = w - pad*2;
       const clamp = n => Math.max(0, Math.min(n, max));
       const v = clamp(value);
-      const barY = h/2 - 18;
-      const barH = 24;
+      const barY = h/2 - 18, barH = 24;
 
       const scoreX = pad + (v/max)*usableW;
 
-      // Placement decisions
+      // Score pill placement
       const PILL_W = 86, PILL_H = 22, EDGE_PAD = 8;
       const UNDER_Y = barY + barH + 10;
       const OVER_Y  = barY - PILL_H - 12;
-
-      // edge-aware pill X
       let pillX = scoreX - PILL_W/2;
       if (pillX < pad + EDGE_PAD) pillX = pad + EDGE_PAD;
       if (pillX + PILL_W > w - pad - EDGE_PAD) pillX = w - pad - EDGE_PAD - PILL_W;
-
-      const tooCloseToCut = cutXList.some(c => Math.abs(scoreX - c) < 36);
+      const tooCloseToCut = cutValues.some(c => Math.abs(scoreX - (pad + (c/max)*usableW)) < 36);
       const pillY = tooCloseToCut ? OVER_Y : UNDER_Y;
 
-      // Band + base
-      let modRect = "";
-      if (showModerate) {
-        const modX = pad + (modStart/max)*usableW;
-        const modW = ((modEnd - modStart)/max)*usableW;
-        modRect = `<rect x="${modX}" y="${barY}" width="${modW}" height="${barH}" rx="10" fill="#fde68a" opacity="0.6"/>`;
-      }
-
-      const cuts = cutXList.map(cx => `
-        <line x1="${cx}" y1="${barY-10}" x2="${cx}" y2="${barY+barH+10}" stroke="#111" stroke-width="2"/>
-        <text class="cut-label" x="${cx}" y="${barY-14}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
-      `).join("");
+      // Build cut lines + labels (50+/75+/90+)
+      const cutSvg = cutValues.map((cVal, i) => {
+        const cx = pad + (cVal/max)*usableW;
+        const label = i===0 ? '50+' : i===1 ? '75+' : '90+';
+        return `
+          <line x1="${cx}" y1="${barY-10}" x2="${cx}" y2="${barY+barH+10}" stroke="#111" stroke-width="2"/>
+          <text class="cut-label" x="${cx}" y="${barY-14}" text-anchor="middle" font-size="11" fill="#111">${label}</text>
+        `;
+      }).join("");
 
       const svg = `
-        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img"
-             aria-label="Visual bar with cut-off(s) and your score marker">
+        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img" aria-label="Percentile cut-offs and your score marker">
           <rect x="${pad}" y="${barY}" width="${usableW}" height="${barH}" rx="12" fill="#f3f4f6" stroke="#e5e7eb"/>
-          ${modRect}
           <rect x="${pad}" y="${barY}" width="${(v/max)*usableW}" height="${barH}" rx="12" fill="var(--york-red)" opacity="0.15"/>
-          ${cuts}
-          <line x1="${scoreX}" y1="${barY-10}" x2="${scoreX}" y2="${barY+barH+10}"
-                stroke="var(--york-red-dark)" stroke-width="2" stroke-dasharray="3 3"/>
+          ${cutSvg}
+          <line x1="${scoreX}" y1="${barY-10}" x2="${scoreX}" y2="${barY+barH+10}" stroke="var(--york-red-dark)" stroke-width="2" stroke-dasharray="3 3"/>
           <foreignObject x="${pillX}" y="${pillY}" width="${PILL_W}" height="${PILL_H+10}">
             <div xmlns="http://www.w3.org/1999/xhtml"
                  style="display:inline-flex;align-items:center;justify-content:center;
@@ -382,41 +349,51 @@
     }
 
     function drawHorizontalBarF1(containerId, value, max){
-      const w = 520, pad = 14, usableW = w - pad*2;
-      const highX = pad + (THRESH.f1.highMin/max)*usableW;
       drawBar({
-        containerId,
-        value,
-        max,
-        cutXList:[highX],
-        showModerate:true,
-        modStart:THRESH.f1.moderateMin,
-        modEnd:THRESH.f1.moderateMax
+        containerId, value, max,
+        cutValues:[CUTS.f1.slightMin, CUTS.f1.elevMin, CUTS.f1.veryMin]
       });
     }
-
     function drawHorizontalBarF2(containerId, value, max){
-      const w = 520, pad = 14, usableW = w - pad*2;
-      const highX = pad + (THRESH.f2.highMin/max)*usableW;
       drawBar({
-        containerId,
-        value,
-        max,
-        cutXList:[highX],
-        showModerate:false
+        containerId, value, max,
+        cutValues:[CUTS.f2.slightMin, CUTS.f2.elevMin, CUTS.f2.veryMin]
       });
     }
 
-    // ===== Summary blurb placeholders (no numbers) =====
-    const BLURBS = {
-      'F1:High|F2:High':'Both exploitation and recruitment indicators are elevated. Prioritize immediate safety planning and consult agency protocols.',
-      'F1:High|F2:Low':'Exploitation indicators are elevated while recruitment indicators are not. Review current safety and supports; explore recent changes or concealed contexts.',
-      'F1:Moderate|F2:High':'Recruitment indicators are elevated alongside a moderate pattern for exploitation. Focus on prevention and rapid monitoring.',
-      'F1:Moderate|F2:Low':'A moderate pattern is present for exploitation, with low recruitment indicators. Continue routine monitoring and engage protective supports.',
-      'F1:Low|F2:High':'Recruitment indicators are elevated while exploitation indicators are low. Emphasize engagement, education, and proactive safety steps.',
-      'F1:Low|F2:Low':'Current indicators do not suggest elevated risk across factors. Maintain regular contact and re-screen if circumstances change.'
+    // ---------- Verbatim summary blurbs from PDF ----------
+    // NOTE: text copied exactly (punctuation/wording preserved). filecite turn2file0
+    const VERBATIM = {
+      expoVE: "This youth is presenting with a significant number of exploitation warning signs placing them at a very elevated risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
+      expoE:  "This youth is presenting with a significant number of exploitation warning signs placing them at an  elevated risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
+      bothHighSig: "This youth is presenting with a high number of  exploitation warning signs and a significant number of recruitment warning signs placing them at risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
+      bothHighHigh: "This youth is presenting with a high number of  exploitation warning signs and a high number of  recruitment warning signs placing them at risk of sex trafficking involvement. Please follow agency guidelines and seek immediate support for the youth.",
+      highExpoLowRec: "This youth is presenting with a high number of  exploitation warning signs and a low number of  recruitment warning signs placing them at risk of sex trafficking involvement. Please follow agency guidelines ensure immediate follow-up with the youth  and implement support.",
+      recVE: "This youth is presenting with a significant number of recruitment warning signs placing them at a very elevated  risk of sex trafficking recruitment. Please follow agency guidelines to ensure immediate follow-up with the youth and take steps to prevent further recruitment risk",
+      recE:  "This youth is presenting with a significant number of recruitment warning signs placing them at an elevated risk of sex trafficking recruitment. Please follow agency guidelines to ensure immediate follow-up with the youth and take steps to prevent further recruitment risk",
+      recSlight: "This youth is presenting with a high number of recruitment warning signs placing them at risk of sex trafficking recruitment. Please follow agency guidelines to ensure immediate follow-up with the youth and take steps to prevent further recruitment risk.",
+      bothLow: "This youth is presenting with a low number of  exploitation and recruitment warning signs placing them at low risk of sex trafficking involvement and recruitment. Continue to monitor for any indicators, and use your clinical judgment. Note that a low score does not rule out risk; youth may still present concerning indicators or circumstances requiring attention."
     };
-    function summaryBlurb(l1,l2){ return BLURBS[`F1:${l1}|F2:${l2}`] || ''; }
+
+    // Choose the correct blurb based on new rules
+    function chooseSummary(f1, f2){
+      // Primary: Exploitation Very Elevated / Elevated
+      if (f1 >= CUTS.f1.veryMin) return VERBATIM.expoVE;
+      if (f1 >= CUTS.f1.elevMin) return VERBATIM.expoE;
+
+      // Combinations where exploitation is "high" (i.e., ≥5)
+      if (f1 >= CUTS.f1.slightMin && f2 >= CUTS.f2.elevMin) return VERBATIM.bothHighSig;
+      if (f1 >= CUTS.f1.slightMin && f2 >= CUTS.f2.slightMin) return VERBATIM.bothHighHigh;
+      if (f1 >= CUTS.f1.slightMin && f2 <= CUTS.f2.lowMax)  return VERBATIM.highExpoLowRec;
+
+      // Recruitment-led cases when exploitation is low
+      if (f1 <= CUTS.f1.lowMax && f2 >= CUTS.f2.veryMin) return VERBATIM.recVE;
+      if (f1 <= CUTS.f1.lowMax && f2 >= CUTS.f2.elevMin) return VERBATIM.recE;
+      if (f1 <= CUTS.f1.lowMax && f2 >= CUTS.f2.slightMin) return VERBATIM.recSlight;
+
+      // Both low
+      return VERBATIM.bothLow;
+    }
 
     // ---------- Render ----------
     function fillConfirmed(ids, ulId){
@@ -444,37 +421,29 @@
     }
 
     function render(){
-      // Print meta timestamp
       const dt=new Date();
       const stamp=dt.toLocaleString(undefined,{dateStyle:'medium', timeStyle:'short'});
       document.getElementById('printMeta').textContent = `Screened on ${stamp} • This printout is generated from a device-only session.`;
 
       const f1 = sum(F1_IDS), f2 = sum(F2_IDS);
-      const f1Max = F1_IDS.length*3, f2Max = F2_IDS.length*3;
+      const f1Max = CUTS.f1.max, f2Max = CUTS.f2.max;
 
-      const L1 = levelF1(f1);
-      const L2 = levelF2(f2);
+      // Factor pills with new bands
+      document.getElementById('f1Nums').textContent = 'Exploitation bar with 50+/75+/90+ markers and your score.';
+      document.getElementById('f2Nums').textContent = 'Recruitment bar with 50+/75+/90+ markers and your score.';
+      setRiskLine('f1RiskLine','f1Pill', bandF1(f1));
+      setRiskLine('f2RiskLine','f2Pill', bandF2(f2));
 
-      // Summary BLURB ONLY
-      document.getElementById('summaryBlurb').textContent = summaryBlurb(L1, L2);
-
-      // SR-only descriptions (no numeric values)
-      document.getElementById('f1Nums').textContent = 'Exploitation indicator bar with moderate band, high cut-off, and your score marker.';
-      document.getElementById('f2Nums').textContent = 'Recruitment indicator bar with high cut-off and your score marker.';
-
-      // Risk lines
-      setRiskLine('f1RiskLine','f1Pill', L1, 'exploitation warning signs');
-      setRiskLine('f2RiskLine','f2Pill', L2, 'recruitment warning signs');
-
-      // Charts (with smart "Your score" pill)
+      // Charts with 3 cut-offs + score pill
       drawHorizontalBarF1('f1Chart', f1, f1Max);
       drawHorizontalBarF2('f2Chart', f2, f2Max);
 
-      // Lists: Confirmed (Yes only)
+      // Summary (PDF text verbatim)
+      document.getElementById('summaryBlurb').textContent = chooseSummary(f1, f2);
+
+      // Lists
       fillConfirmed(F1_IDS,'f1List');
       fillConfirmed(F2_IDS,'f2List');
-
-      // Combined NI/Maybe
       fillCombinedNI('niCombined');
     }
 
@@ -487,7 +456,7 @@
     window.addEventListener('pagehide',clearKeys);
     window.addEventListener('beforeunload',clearKeys);
 
-    // Offline-friendly: service worker
+    // Offline-friendly
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{});
