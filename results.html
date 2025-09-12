@@ -47,9 +47,8 @@
 
     /* Horizontal chart */
     .chart-wrap{margin-top:12px}
-    /* No layout shift: reserve height */
-    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden;min-height:84px}
-    .chart-box > div{min-height:64px}
+    .chart-box{border:1px solid var(--border);border-radius:12px;padding:8px 12px;overflow:hidden;min-height:116px}
+    .chart-box > div{min-height:96px} /* Reserve space for pill label */
 
     /* Dropdown arrows */
     details{margin-top:10px}
@@ -285,8 +284,6 @@
       return all.filter(id => isNoInfo(id));
     }
 
-    function tag(raw){ return raw === 3 ? "Yes" : raw === 2 ? "Maybe" : "No"; }
-
     // Risk level calculators (visual-only; no numbers shown)
     function levelF1(score){
       if (score >= THRESH.f1.highMin) return 'High';
@@ -324,77 +321,91 @@
       line.appendChild(msg);
     }
 
-    // ===== Horizontal bars without numbers + markers =====
+    /* ---------- Bar charts with smart "Your score" pill ---------- */
+    function drawBar({containerId, value, max, cutXList=[], showModerate=false, modStart=0, modEnd=0}) {
+      const w = 520, h = 96, pad = 14;
+      const usableW = w - pad*2;
+      const clamp = n => Math.max(0, Math.min(n, max));
+      const v = clamp(value);
+      const barY = h/2 - 18;
+      const barH = 24;
+
+      const scoreX = pad + (v/max)*usableW;
+
+      // Placement decisions
+      const PILL_W = 86, PILL_H = 22, EDGE_PAD = 8;
+      const UNDER_Y = barY + barH + 10;
+      const OVER_Y  = barY - PILL_H - 12;
+
+      // edge-aware pill X
+      let pillX = scoreX - PILL_W/2;
+      if (pillX < pad + EDGE_PAD) pillX = pad + EDGE_PAD;
+      if (pillX + PILL_W > w - pad - EDGE_PAD) pillX = w - pad - EDGE_PAD - PILL_W;
+
+      const tooCloseToCut = cutXList.some(c => Math.abs(scoreX - c) < 36);
+      const pillY = tooCloseToCut ? OVER_Y : UNDER_Y;
+
+      // Band + base
+      let modRect = "";
+      if (showModerate) {
+        const modX = pad + (modStart/max)*usableW;
+        const modW = ((modEnd - modStart)/max)*usableW;
+        modRect = `<rect x="${modX}" y="${barY}" width="${modW}" height="${barH}" rx="10" fill="#fde68a" opacity="0.6"/>`;
+      }
+
+      const cuts = cutXList.map(cx => `
+        <line x1="${cx}" y1="${barY-10}" x2="${cx}" y2="${barY+barH+10}" stroke="#111" stroke-width="2"/>
+        <text class="cut-label" x="${cx}" y="${barY-14}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
+      `).join("");
+
+      const svg = `
+        <svg width="100%" viewBox="0 0 ${w} ${h}" role="img"
+             aria-label="Visual bar with cut-off(s) and your score marker">
+          <rect x="${pad}" y="${barY}" width="${usableW}" height="${barH}" rx="12" fill="#f3f4f6" stroke="#e5e7eb"/>
+          ${modRect}
+          <rect x="${pad}" y="${barY}" width="${(v/max)*usableW}" height="${barH}" rx="12" fill="var(--york-red)" opacity="0.15"/>
+          ${cuts}
+          <line x1="${scoreX}" y1="${barY-10}" x2="${scoreX}" y2="${barY+barH+10}"
+                stroke="var(--york-red-dark)" stroke-width="2" stroke-dasharray="3 3"/>
+          <foreignObject x="${pillX}" y="${pillY}" width="${PILL_W}" height="${PILL_H+10}">
+            <div xmlns="http://www.w3.org/1999/xhtml"
+                 style="display:inline-flex;align-items:center;justify-content:center;
+                        width:${PILL_W}px;height:${PILL_H}px;
+                        background:#fff5f6;border:1px solid #ffd9de;border-radius:999px;
+                        font:600 12px 'IBM Plex Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+                        color:var(--york-red-dark);line-height:1;">
+              Your score
+            </div>
+          </foreignObject>
+        </svg>`;
+      document.getElementById(containerId).innerHTML = svg;
+    }
+
     function drawHorizontalBarF1(containerId, value, max){
-  const w = 520, h = 82, pad = 14;
-  const usableW = w - pad*2;
-  const clamp = n => Math.max(0, Math.min(n, max));
-  const v = clamp(value);
-  const valW = (v/max)*usableW;
+      const w = 520, pad = 14, usableW = w - pad*2;
+      const highX = pad + (THRESH.f1.highMin/max)*usableW;
+      drawBar({
+        containerId,
+        value,
+        max,
+        cutXList:[highX],
+        showModerate:true,
+        modStart:THRESH.f1.moderateMin,
+        modEnd:THRESH.f1.moderateMax
+      });
+    }
 
-  const modStart = THRESH.f1.moderateMin, modEnd = THRESH.f1.moderateMax, highStart = THRESH.f1.highMin;
-  const modX = pad + (modStart/max)*usableW;
-  const modW = ((modEnd - modStart)/max)*usableW;
-  const highX = pad + (highStart/max)*usableW;
-  const scoreX = pad + (v/max)*usableW;
-
-  // --- Edge-safe label placement ---
-  const LABEL_PAD = 28;                        // min space from edges so text won't clip
-  const minX = pad + LABEL_PAD;
-  const maxX = w - pad - LABEL_PAD;
-  const labelXRaw = scoreX;
-  const labelX = Math.max(minX, Math.min(labelXRaw, maxX));
-  const anchor = (labelXRaw <= minX) ? 'start' : (labelXRaw >= maxX) ? 'end' : 'middle';
-
-  const svg = `
-    <svg width="100%" viewBox="0 0 ${w} ${h}" role="img"
-         aria-label="Visual bar with moderate band, high cut-off, and your score marker">
-      <rect x="${pad}" y="${h/2 - 16}" width="${usableW}" height="22" rx="11" fill="#f3f4f6" stroke="#e5e7eb"/>
-      <rect x="${modX}" y="${h/2 - 16}" width="${modW}" height="22" rx="10" fill="#fde68a" opacity="0.6"/>
-      <rect x="${pad}" y="${h/2 - 16}" width="${valW}" height="22" rx="11" fill="var(--york-red)"/>
-      <!-- High cutoff -->
-      <line class="cut-line" x1="${highX}" y1="${h/2 - 20}" x2="${highX}" y2="${h/2 + 20}" stroke="#111" stroke-width="2"/>
-      <text class="cut-label" x="${highX}" y="${h/2 - 26}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
-      <!-- Your score marker -->
-      <line x1="${scoreX}" y1="${h/2 - 20}" x2="${scoreX}" y2="${h/2 + 20}" stroke="var(--york-red-dark)" stroke-width="2" stroke-dasharray="3 3"/>
-      <text class="score-label" x="${labelX}" y="${h/2 + 34}" text-anchor="${anchor}" font-size="11" fill="var(--york-red-dark)">Your score</text>
-    </svg>`;
-  document.getElementById(containerId).innerHTML = svg;
-}
-
-function drawHorizontalBarF2(containerId, value, max){
-  const w = 520, h = 82, pad = 14;
-  const usableW = w - pad*2;
-  const clamp = n => Math.max(0, Math.min(n, max));
-  const v = clamp(value);
-  const valW = (v/max)*usableW;
-
-  const cutX = pad + (THRESH.f2.highMin/max)*usableW;
-  const scoreX = pad + (v/max)*usableW;
-
-  // --- Edge-safe label placement ---
-  const LABEL_PAD = 28;
-  const minX = pad + LABEL_PAD;
-  const maxX = w - pad - LABEL_PAD;
-  const labelXRaw = scoreX;
-  const labelX = Math.max(minX, Math.min(labelXRaw, maxX));
-  const anchor = (labelXRaw <= minX) ? 'start' : (labelXRaw >= maxX) ? 'end' : 'middle';
-
-  const svg = `
-    <svg width="100%" viewBox="0 0 ${w} ${h}" role="img"
-         aria-label="Visual bar with high cut-off and your score marker">
-      <rect x="${pad}" y="${h/2 - 16}" width="${usableW}" height="22" rx="11" fill="#f3f4f6" stroke="#e5e7eb"/>
-      <rect x="${pad}" y="${h/2 - 16}" width="${valW}" height="22" rx="11" fill="var(--york-red)"/>
-      <!-- High cutoff -->
-      <line class="cut-line" x1="${cutX}" y1="${h/2 - 20}" x2="${cutX}" y2="${h/2 + 20}" stroke="#111" stroke-width="2"/>
-      <text class="cut-label" x="${cutX}" y="${h/2 - 26}" text-anchor="middle" font-size="11" fill="#111">High cut-off</text>
-      <!-- Your score marker -->
-      <line x1="${scoreX}" y1="${h/2 - 20}" x2="${scoreX}" y2="${h/2 + 20}" stroke="var(--york-red-dark)" stroke-width="2" stroke-dasharray="3 3"/>
-      <text class="score-label" x="${labelX}" y="${h/2 + 34}" text-anchor="${anchor}" font-size="11" fill="var(--york-red-dark)">Your score</text>
-    </svg>`;
-  document.getElementById(containerId).innerHTML = svg;
-}
-
+    function drawHorizontalBarF2(containerId, value, max){
+      const w = 520, pad = 14, usableW = w - pad*2;
+      const highX = pad + (THRESH.f2.highMin/max)*usableW;
+      drawBar({
+        containerId,
+        value,
+        max,
+        cutXList:[highX],
+        showModerate:false
+      });
+    }
 
     // ===== Summary blurb placeholders (no numbers) =====
     const BLURBS = {
@@ -455,7 +466,7 @@ function drawHorizontalBarF2(containerId, value, max){
       setRiskLine('f1RiskLine','f1Pill', L1, 'exploitation warning signs');
       setRiskLine('f2RiskLine','f2Pill', L2, 'recruitment warning signs');
 
-      // Charts (now with "Your score" marker)
+      // Charts (with smart "Your score" pill)
       drawHorizontalBarF1('f1Chart', f1, f1Max);
       drawHorizontalBarF2('f2Chart', f2, f2Max);
 
