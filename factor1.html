@@ -50,7 +50,8 @@
     h1{ margin:0 0 6px 0; font-size: clamp(24px, 3.6vw, 34px); line-height:1.2; letter-spacing:-.01em; }
     .time-note{ font-size:14px; color:var(--muted); }
 
-    .answer-key{ margin-top:12px; padding:12px; border:1px dashed var(--border); border-radius:12px; background:#fff; }
+    .answer-key{ margin-top:12px; padding:12px; border-radius:12px; background:#fff; }
+
     .answer-key h2{ margin:0 0 8px 0; font-size:14px; letter-spacing:.2px; }
     .key-grid{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     @media(max-width:539px){ .key-grid{ grid-template-columns:1fr; } }
@@ -90,14 +91,13 @@
     .mobile-bar{ flex:1; height:8px; background:#f2f2f2; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
     .mobile-bar .fill{ height:100%; width:0%; background: var(--york-red); transition: width .2s ease; }
     @media(min-width: 980px){ .mobile-progress{ display:none; } }
-  </style>
-<head>
-  <style>
+
+    /* Stronger visual for answer key */
     .answer-key {
-      border: 2px solid #cc0000; /* subtle but visible red */
-      border-radius: 6px;        /* soften corners */
-      padding: 1rem;             /* spacing inside box */
-      margin-bottom: 1.5rem;     /* space before first question */
+      border: 2px solid #cc0000;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
     }
   </style>
 </head>
@@ -125,19 +125,17 @@
         <form id="combined-form" novalidate>
           <div id="question-list"></div>
           <div class="cta">
-            <button type="button" class="btn-primary" id="submitBtn">Submit & View Results</button>
+            <button type="button" class="btn-primary" id="submitBtn">Submit &amp; View Results</button>
           </div>
         </form>
 
-
         <footer>
-  <small>
-    Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions.<br>
-    © 2025 Teen Relationships Lab, York University. No distribution of this tool outside your agency.
-  </small>
-</footer>
-</section>
-
+          <small>
+            Developed by the Teen Relationships Lab at York University in partnership with York Region CAS and Simcoe-Muskoka Family Connexions.<br>
+            © 2025 Teen Relationships Lab, York University. No distribution of this tool outside your agency.
+          </small>
+        </footer>
+      </section>
 
       <aside class="rail">
         <div class="progress-box panel">
@@ -250,7 +248,6 @@
 
     const orderedQuestions = orderedIds.map(id => BANK[id]).filter(Boolean);
 
-    // Factor membership (unchanged)
     const factor1Set = new Set([
       'yst5b_sxl_prtn','yst5c_nn_dscls','yst5d_stis','yst5_ldr_prtnr','yst5f_bsv_prtn',
       'yst7_cnnctns_x','yst7b_gang','yst7d_trffckn_','yst7e_hides_nf',
@@ -264,7 +261,6 @@
       'yst8g_housing','yst6f_chngd_pp'
     ]);
 
-    // Response scale (store 0/2/3; 1 = “No Info”)
     const options = [
       { label: "No Info", value: 1 },
       { label: "No", value: 0 },
@@ -314,13 +310,11 @@
       document.getElementById('barFillMobile').style.width = pct + '%';
     }
 
-    // Reverse-coding that preserves “No Info” (1) and “Maybe” (2).
-    // Only “No”(0) <-> “Yes”(3) flip when q.reverse === true.
     function reverseScorePreservingNI(raw){
-      if (raw === 1) return 1;      // No Info stays No Info
-      if (raw === 2) return 2;      // Maybe stays Maybe
-      if (raw === 0) return 3;      // No -> Yes
-      if (raw === 3) return 0;      // Yes -> No
+      if (raw === 1) return 1;
+      if (raw === 2) return 2;
+      if (raw === 0) return 3;
+      if (raw === 3) return 0;
       return raw;
     }
 
@@ -345,18 +339,13 @@
       orderedQuestions.forEach(q => {
         const sel = document.querySelector(`input[name="${q.id}"]:checked`);
         const raw = parseInt(sel.value, 10);
-
-        // Apply the only reverse-coded item rule
         const val = q.reverse ? reverseScorePreservingNI(raw) : raw;
 
-        // Persist value
         localStorage.setItem(q.id, String(val));
 
-        // Mark/clear No-Info flag for results page compatibility
         if (raw === 1) { localStorage.setItem(q.id + '_ni', '1'); }
         else { localStorage.removeItem(q.id + '_ni'); }
 
-        // Tally by factor
         if (factor1Set.has(q.id)) f1Score += val;
         if (factor2Set.has(q.id)) f2Score += val;
       });
@@ -369,7 +358,9 @@
 
     document.getElementById('submitBtn').addEventListener('click', () => {
       if(validateAndScore()){
-        window.location.href = 'results.html';
+        // Always go to results.html in the SAME folder as this page
+        const resultsUrl = new URL('results.html', window.location.href);
+        window.location.href = resultsUrl.href;
       }
     });
   </script>
